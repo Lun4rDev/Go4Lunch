@@ -1,7 +1,12 @@
 <resources>
     <string name="app_name">Go4Lunch</string>
-    <string name="title_home">Home</string>
+
+    <!-- View names -->
     <string name="map_view">Map View</string>
     <string name="list_view">List View</string>
-    <string name="contact_view">Contact View</string>
+    <string name="people_view">Workmates</string>
+
+    <!-- Navigation drawer strings -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>
