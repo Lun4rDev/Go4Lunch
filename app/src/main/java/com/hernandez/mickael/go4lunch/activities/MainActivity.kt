@@ -1,21 +1,33 @@
 package com.hernandez.mickael.go4lunch.activities
 
+import android.app.Activity
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.firebase.ui.auth.AuthUI
 import com.google.android.gms.maps.SupportMapFragment
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.firebase.ui.auth.IdpResponse
+import android.content.Intent
+
+
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    val RC_SIGN_IN = 123
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -66,7 +78,38 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
         nav_view.setNavigationItemSelectedListener(this)
         toolbar.inflateMenu(R.menu.toolbar)
+
+        // Choose authentication providers
+        var providers = Arrays.asList(
+                AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+        AuthUI.IdpConfig.Builder(AuthUI.PHONE_VERIFICATION_PROVIDER).build(),
+        AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
+        AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build())
+
+        startActivityForResult(AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setAvailableProviders(providers)
+                .build(), RC_SIGN_IN)
+
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val response = IdpResponse.fromResultIntent(data)
+
+            if (resultCode == Activity.RESULT_OK) {
+                // Successfully signed in
+                val user = FirebaseAuth.getInstance().currentUser
+                // ...
+            } else {
+                // Sign in failed, check response for error code
+                // ...
+            }
+        }
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater = menuInflater
