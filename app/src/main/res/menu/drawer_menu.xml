@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/item_lunch"/>
-    <item android:title="@string/item_settings"/>
-    <item android:title="@string/items_logout"/>
+    <item android:id="@+id/item_lunch" android:title="@string/item_lunch"/>
+    <item android:id="@+id/item_settings" android:title="@string/item_settings"/>
+    <item android:id="@+id/item_logout" android:title="@string/items_logout"/>
 </menu>

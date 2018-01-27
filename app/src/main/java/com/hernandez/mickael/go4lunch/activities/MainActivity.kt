@@ -1,6 +1,7 @@
 package com.hernandez.mickael.go4lunch.activities
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.design.widget.BottomNavigationView
@@ -21,22 +22,34 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.firebase.ui.auth.IdpResponse
 import android.content.Intent
-
-
+import android.content.SharedPreferences
+import android.widget.ImageView
+import android.widget.TextView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.Transformation
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
+import com.bumptech.glide.load.resource.bitmap.TransformationUtils
+import kotlinx.android.synthetic.main.nav_header_main.*
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
+    /** Sign-in intent code */
     val RC_SIGN_IN = 123
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 
-    private lateinit var pagerAdapter : BottomBarAdapter
+    /** Shared preferences */
+    lateinit var mSharedPrefs : SharedPreferences
+
+    /** Firebase user object */
+    var mUser : FirebaseUser? = null
 
     /** Navigation drawer */
     lateinit var navView : NavigationView
 
+    /** Bottom navigation adapter */
+    private lateinit var pagerAdapter : BottomBarAdapter
+
+    /** Bottom navigation click listener */
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_map -> {
@@ -58,11 +71,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         false
     }
 
+    /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Sets the toolbar
-        //setSupportActionBar(toolbar)
+        mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
+
+        // Bottom navigation view and adapter init
+        navView = findViewById(R.id.nav_view)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         viewPager.setPagingEnabled(false)
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
@@ -86,34 +102,65 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
         AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build())
 
-        startActivityForResult(AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .build(), RC_SIGN_IN)
 
+        // Firebase user init
+        mUser = FirebaseAuth.getInstance().currentUser
+        if(mUser == null){
+            startActivityForResult(AuthUI.getInstance()
+                    .createSignInIntentBuilder()
+                    .setAvailableProviders(providers)
+                    .build(), RC_SIGN_IN)
+        } else {
+            updateUI(true)
+        }
     }
 
+    /** Updates UI according to the connection state */
+    private fun updateUI(connected : Boolean){
+        if(connected){
+            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
+            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
+            Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
+        }
+    }
+
+    /** Catches activities results */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         super.onActivityResult(requestCode, resultCode, data)
-
+        // Firebase AuthUI sign-in response
         if (requestCode == RC_SIGN_IN) {
             val response = IdpResponse.fromResultIntent(data)
 
             if (resultCode == Activity.RESULT_OK) {
                 // Successfully signed in
-                val user = FirebaseAuth.getInstance().currentUser
+                mUser = FirebaseAuth.getInstance().currentUser!!
+                updateUI(true)
+
                 // ...
             } else {
+                updateUI(false)
                 // Sign in failed, check response for error code
                 // ...
             }
         }
     }
 
-
+    /** Inflates the toolbar menu */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.toolbar, menu)
+        return true
+    }
+
+    /** Handles click on a navigation drawer item */
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.item_lunch -> {}
+            R.id.item_settings -> {}
+            R.id.item_logout -> {
+                FirebaseAuth.getInstance().signOut()
+            }
+        }
         return true
     }
 }
