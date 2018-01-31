@@ -1,9 +1,13 @@
 <resources>
     <string name="app_name">Go4Lunch</string>
 
-    <!-- Facebook strings -->
-    <string name="facebook_app_id">1167955320007971</string>
+    <!-- Facebook consumer key and secret -->
+    <string name="facebook_application_id">1167955320007971</string>
     <string name="fb_login_protocol_scheme">fb1167955320007971</string>
+
+    <!-- Twitter consumer key and secret -->
+    <string name="twitter_consumer_key" translatable="false">Zk3y1y4KRVv8TBOo5aMwn6P0j</string>
+    <string name="twitter_consumer_secret" translatable="false">nCSlzemjQGvAicvpGB8sMhQ0YgJxTvCRQKpvvRj0G5vNsBlzcY</string>
 
     <!-- View names -->
     <string name="map_view">Map View</string>
@@ -15,6 +19,8 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="item_lunch">YOUR LUNCH</string>
     <string name="item_settings">SETTINGS</string>
-    <string name="items_logout">LOGOUT</string>
+    <string name="item_logout">LOGOUT</string>
     <string name="connection">Connection</string>
+    <string name="disconnected">You have been successfully disconnected.</string>
+    <string name="connectionfail">Connection failed</string>
 </resources>

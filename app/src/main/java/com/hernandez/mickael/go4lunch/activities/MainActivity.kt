@@ -1,41 +1,37 @@
 package com.hernandez.mickael.go4lunch.activities
 
-import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
+import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
-import com.firebase.ui.auth.AuthUI
+import android.widget.TextView
+import com.bumptech.glide.Glide
+import com.google.android.gms.common.api.Status
+import com.google.android.gms.location.places.Place
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
+import com.google.android.gms.location.places.ui.PlaceSelectionListener
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.firebase.ui.auth.IdpResponse
-import android.content.Intent
-import android.content.SharedPreferences
-import android.widget.ImageView
-import android.widget.TextView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.Transformation
-import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.bumptech.glide.load.resource.bitmap.TransformationUtils
-import kotlinx.android.synthetic.main.nav_header_main.*
 
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
     /** Sign-in intent code */
     val RC_SIGN_IN = 123
+    val RC_LOGOUT = 456
 
     /** Shared preferences */
     lateinit var mSharedPrefs : SharedPreferences
@@ -48,6 +44,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
+
+    private lateinit var mMap : GoogleMap
 
     /** Bottom navigation click listener */
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -82,7 +80,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         viewPager.setPagingEnabled(false)
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
-        pagerAdapter.addFragments(SupportMapFragment())
+        pagerAdapter.addFragments(SupportMapFragment.newInstance())
         pagerAdapter.addFragments(ListFragment())
         pagerAdapter.addFragments(PeopleFragment())
         viewPager.adapter = pagerAdapter
@@ -95,54 +93,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         nav_view.setNavigationItemSelectedListener(this)
         toolbar.inflateMenu(R.menu.toolbar)
 
-        // Choose authentication providers
-        var providers = Arrays.asList(
-                AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
-        AuthUI.IdpConfig.Builder(AuthUI.PHONE_VERIFICATION_PROVIDER).build(),
-        AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
-        AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build())
+        val autocompleteFragment = PlaceAutocompleteFragment()
+        //supportFragmentManager.findFragmentById(R.id.place_autocomplete_fragment)
 
+        val listener = object : PlaceSelectionListener {
+            override fun onPlaceSelected(p0: Place?) {
 
-        // Firebase user init
-        mUser = FirebaseAuth.getInstance().currentUser
-        if(mUser == null){
-            startActivityForResult(AuthUI.getInstance()
-                    .createSignInIntentBuilder()
-                    .setAvailableProviders(providers)
-                    .build(), RC_SIGN_IN)
-        } else {
-            updateUI(true)
+            }
+
+            override fun onError(p0: Status?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
         }
-    }
+        autocompleteFragment.setOnPlaceSelectedListener(listener)
 
-    /** Updates UI according to the connection state */
-    private fun updateUI(connected : Boolean){
-        if(connected){
+        mUser = FirebaseAuth.getInstance().currentUser
+        if(mUser != null){
             navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
             navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
             Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
         }
     }
 
-    /** Catches activities results */
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
-        super.onActivityResult(requestCode, resultCode, data)
-        // Firebase AuthUI sign-in response
-        if (requestCode == RC_SIGN_IN) {
-            val response = IdpResponse.fromResultIntent(data)
-
-            if (resultCode == Activity.RESULT_OK) {
-                // Successfully signed in
-                mUser = FirebaseAuth.getInstance().currentUser!!
-                updateUI(true)
-
-                // ...
-            } else {
-                updateUI(false)
-                // Sign in failed, check response for error code
-                // ...
-            }
-        }
+    override fun onMapReady(p0: GoogleMap?) {
+        mMap = p0!!
+        mMap.uiSettings.isMyLocationButtonEnabled = true
+        //gMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style))
     }
 
     /** Inflates the toolbar menu */
@@ -158,9 +135,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.item_lunch -> {}
             R.id.item_settings -> {}
             R.id.item_logout -> {
-                FirebaseAuth.getInstance().signOut()
+                //FirebaseAuth.getInstance().signOut
+                finish()
             }
         }
+        drawer_layout.closeDrawer(GravityCompat.START)
         return true
     }
 }

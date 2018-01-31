@@ -4,5 +4,7 @@
     <string name="map_view">Carte</string>
     <string name="list_view">Liste</string>
     <string name="people_view">Collègues</string>
-    <string name="connection">Connection</string>
+    <string name="connection">Connexion</string>
+    <string name="disconnected">Vous avez été deconnecté avec succès.</string>
+    <string name="connectionfail">La connexion a échoué</string>
 </resources>
