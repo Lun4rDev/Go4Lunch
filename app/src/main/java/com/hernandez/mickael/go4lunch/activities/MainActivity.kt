@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private lateinit var mLastKnownLocation: Location
 
-    private val DEFAULT_ZOOM = 15f
+    private val DEFAULT_ZOOM = 16f
 
     private lateinit var mDefaultLocation: LatLng
 
@@ -185,14 +185,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
        * onRequestPermissionsResult.
        */
         if ((ContextCompat.checkSelfPermission(this.applicationContext,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED))
+                        android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED))
         {
             mLocationPermissionGranted = true
         }
         else
         {
             ActivityCompat.requestPermissions(this,
-                    arrayOf<String>(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
         }
     }
@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         //Log.d(TAG, "Current location is null. Using defaults.")
                         //Log.e(TAG, "Exception: %s", task.getException())
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM))
-                        mMap.uiSettings.isMyLocationButtonEnabled = false
+                        mMap.uiSettings.isMyLocationButtonEnabled = true
                     }
                 }
             }

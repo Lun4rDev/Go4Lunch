@@ -29,13 +29,14 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.0.2'
 
     // Firebase
-    //implementation 'com.google.firebase:firebase-auth:11.8.0'
-    implementation 'com.firebaseui:firebase-ui-auth:3.2.1'
+    implementation 'com.google.firebase:firebase-auth:11.8.0'
+    //implementation 'com.firebaseui:firebase-ui-auth:3.2.1'
 
     // Google Play Services
     implementation 'com.google.android.gms:play-services-maps:11.8.0'
     implementation 'com.google.android.gms:play-services-places:11.8.0'
     implementation 'com.google.android.gms:play-services-location:11.8.0'
+    implementation 'com.google.android.gms:play-services-auth:11.8.0'
 
     // Facebook
     implementation 'com.facebook.android:facebook-android-sdk:4.27.0'

@@ -6,8 +6,12 @@
     <string name="fb_login_protocol_scheme">fb1167955320007971</string>
 
     <!-- Twitter consumer key and secret -->
-    <string name="twitter_consumer_key" translatable="false">Zk3y1y4KRVv8TBOo5aMwn6P0j</string>
-    <string name="twitter_consumer_secret" translatable="false">nCSlzemjQGvAicvpGB8sMhQ0YgJxTvCRQKpvvRj0G5vNsBlzcY</string>
+    <string name="com.twitter.sdk.android.CONSUMER_KEY" translatable="false">Zk3y1y4KRVv8TBOo5aMwn6P0j</string>
+    <string name="com.twitter.sdk.android.CONSUMER_SECRET" translatable="false">nCSlzemjQGvAicvpGB8sMhQ0YgJxTvCRQKpvvRj0G5vNsBlzcY</string>
+
+    <!-- GitHub consumer key and secret -->
+    <string name="github_id">3e789217b2572a457a05</string>
+    <string name="github_secret">933749e3f89c49317d3dbb7b79be2fba43350394</string>
 
     <!-- View names -->
     <string name="map_view">Map View</string>

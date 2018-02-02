@@ -10,6 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyD5dH9L59KNQtfLOyBWSm69bwFwA7dWuhU"/>
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_application_id"/>
         <activity android:name=".activities.ConnectionActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
