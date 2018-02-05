@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Go4Lunch</string>
 
+    <string name="places_api_key">AIzaSyCLx5WO9P9hWujgs4CiEEmywSzWX7x97hM</string>
+
     <!-- Facebook consumer key and secret -->
     <string name="facebook_application_id">1167955320007971</string>
     <string name="fb_login_protocol_scheme">fb1167955320007971</string>
@@ -12,6 +14,7 @@
     <!-- GitHub consumer key and secret -->
     <string name="github_id">3e789217b2572a457a05</string>
     <string name="github_secret">933749e3f89c49317d3dbb7b79be2fba43350394</string>
+    <string name="github_app_url">go4lunch://github</string>
 
     <!-- View names -->
     <string name="map_view">Map View</string>
@@ -27,4 +30,5 @@
     <string name="connection">Connection</string>
     <string name="disconnected">You have been successfully disconnected.</string>
     <string name="connectionfail">Connection failed</string>
+    <string name="google_web_client_id">85975384709–1p2rka40di3v2q26i7mfj3q67dn6226c.apps.googleusercontent.com</string>
 </resources>

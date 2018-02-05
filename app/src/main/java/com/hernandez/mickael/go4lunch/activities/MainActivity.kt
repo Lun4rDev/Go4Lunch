@@ -1,12 +1,12 @@
 package com.hernandez.mickael.go4lunch.activities
 
+import android.app.SearchManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationProvider
 import android.os.Bundle
-import android.support.annotation.NonNull
 import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
@@ -17,16 +17,16 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.SearchView
 import android.widget.TextView
 import com.bumptech.glide.Glide
+import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.common.api.PendingResult
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.places.GeoDataClient
-import com.google.android.gms.location.places.Place
-import com.google.android.gms.location.places.PlaceDetectionClient
-import com.google.android.gms.location.places.Places
+import com.google.android.gms.location.places.*
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -34,10 +34,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
@@ -45,12 +45,12 @@ import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
     /** Sign-in intent code */
     val RC_SIGN_IN = 123
+
     val RC_LOGOUT = 456
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
-
     /** Shared preferences */
     lateinit var mSharedPrefs : SharedPreferences
 
@@ -93,6 +93,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         false
     }
 
+    private lateinit var mGoogleApiClient: GoogleApiClient
+
     private lateinit var mGeoDataClient: GeoDataClient
 
     private lateinit var mPlaceDetectionClient: PlaceDetectionClient
@@ -105,11 +107,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private lateinit var mDefaultLocation: LatLng
 
+    private val mListFragment = ListFragment()
+
     /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Shared Preferences
         mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
+
+        // Google API Client
+        mGoogleApiClient = GoogleApiClient
+                .Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
+                .enableAutoManage(this, this)
+                .build()
+        mGoogleApiClient.connect()
 
         mMapFragment.getMapAsync(this)
 
@@ -129,7 +144,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         viewPager.setPagingEnabled(false)
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
         pagerAdapter.addFragments(mMapFragment)
-        pagerAdapter.addFragments(ListFragment())
+        pagerAdapter.addFragments(mListFragment)
         pagerAdapter.addFragments(PeopleFragment())
         viewPager.adapter = pagerAdapter
 
@@ -141,7 +156,39 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         nav_view.setNavigationItemSelectedListener(this)
         toolbar.inflateMenu(R.menu.toolbar)
 
-        val autocompleteFragment = PlaceAutocompleteFragment()
+        // Toolbar search item and view
+        val si = toolbar.menu.findItem(R.id.search_item)
+        val searchView = si.actionView as SearchView
+
+        // Toolbar search listener
+        searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                mListFragment.resetList()
+
+                // Restaurants filter
+                val filter = AutocompleteFilter.Builder().setTypeFilter(Place.TYPE_RESTAURANT).build()
+
+                // Places Autocomplete result
+                val result = Places.GeoDataApi.getAutocompletePredictions(
+                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 1000.0), filter)
+                result.setResultCallback {
+                    it.forEach {
+                        Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
+                            mListFragment.addPlace(it[0])
+                        }
+                    }
+                    it.release()
+                }
+                return false
+            }
+
+            override fun onQueryTextChange(p0: String?): Boolean {
+                return false
+            }
+
+        })
+
+        /*val autocompleteFragment = PlaceAutocompleteFragment()
         //supportFragmentManager.findFragmentById(R.id.place_autocomplete_fragment)
 
         val listener = object : PlaceSelectionListener {
@@ -154,7 +201,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
         }
-        autocompleteFragment.setOnPlaceSelectedListener(listener)
+        autocompleteFragment.setOnPlaceSelectedListener(listener)*/
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
@@ -245,13 +292,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-
-    /** Inflates the toolbar menu */
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater = menuInflater
-        inflater.inflate(R.menu.toolbar, menu)
-        return true
+    fun toBounds(location: Location, radiusInMeters: Double): LatLngBounds {
+        val center = LatLng(location.longitude, location.latitude)
+        val distanceFromCenterToCorner = radiusInMeters * Math.sqrt(2.0)
+        val southwestCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 225.0)
+        val northeastCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 45.0)
+        return LatLngBounds(southwestCorner, northeastCorner)
     }
+
 
     /** Handles click on a navigation drawer item */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -259,11 +307,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.item_lunch -> {}
             R.id.item_settings -> {}
             R.id.item_logout -> {
-                //FirebaseAuth.getInstance().signOut
                 finish()
             }
         }
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    /** Prevents user from going back to ConnectionActivity */
+    override fun onBackPressed() {
+        if(drawer_layout.isDrawerOpen(GravityCompat.START)){
+            drawer_layout.closeDrawer(GravityCompat.START)
+        }
+    }
+
+    /** On Google API connection failed */
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

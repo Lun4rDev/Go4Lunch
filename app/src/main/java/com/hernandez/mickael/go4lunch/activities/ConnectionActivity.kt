@@ -7,34 +7,63 @@ import android.os.Bundle
 import android.support.v4.app.FragmentActivity
 import android.util.Log
 import android.widget.Toast
-import com.facebook.FacebookSdk
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
+import com.facebook.*
+import com.facebook.login.LoginResult
+import com.facebook.login.widget.LoginButton
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.*
 import com.hernandez.mickael.go4lunch.R
 import com.twitter.sdk.android.core.*
+import com.twitter.sdk.android.core.Callback
 import kotlinx.android.synthetic.main.activity_connection.*
 import okhttp3.*
 import java.io.IOException
 import java.math.BigInteger
 import java.util.*
-import com.twitter.sdk.android.core.*
-import com.twitter.sdk.android.core.Callback
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.AuthCredential
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseUser
+
+
+
+
+
+
+
 
 /**
  * Created by Mickael Hernandez on 31/01/2018.
  */
 class ConnectionActivity : FragmentActivity() {
+    val TAG = "DEBUGTAG"
     val RC_LOGOUT = 456
     val RC_GOOGLE = 123
-    val RC_TWITTER = 140
     val RC_FACEBOOK = 64206
-    val REDIRECT_URL_CALLBACK = "https://go4lunch-91fa5.firebaseapp.com/__/auth/handler"
 
     private var mAuth = FirebaseAuth.getInstance()
 
+    private lateinit var mAuthStateListener : FirebaseAuth.AuthStateListener
+
+    private lateinit var mFbCallbackManager: CallbackManager
+
+    private lateinit var mGoogleSignInClient: GoogleSignInClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
+
+        // Catches GitHub auth intent
+        var uri = intent.data
+        if(uri != null && uri.toString().startsWith(getString(R.string.github_app_url))){
+            val code = uri.getQueryParameter("code")
+            val state = uri.getQueryParameter("state")
+            if(code != null && state != null){
+                sendPost(code, state)
+            }
+        }
 
         // Initialize Facebook SDK
         FacebookSdk.sdkInitialize(this)
@@ -42,21 +71,69 @@ class ConnectionActivity : FragmentActivity() {
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
+        //// Recovering signed-in Facebook account
+        /*val fbToken = AccessToken.getCurrentAccessToken()
+        if(fbToken != null){
+            signInFacebook(fbToken)
+        }*/
+
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if(account != null){
+            signInGoogle(account.idToken.toString())
+        }
+
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.google_web_client_id))
+                .requestEmail()
+                .build()
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        btn_google.setOnClickListener {
+            val signInIntent = mGoogleSignInClient.signInIntent
+            startActivityForResult(signInIntent, RC_GOOGLE)
+        }
+
+
+
+
+        // Initialize Facebook Login button
+        mFbCallbackManager = CallbackManager.Factory.create()
+        val loginButton = findViewById<LoginButton>(R.id.btn_facebook)
+        loginButton.setReadPermissions("email", "public_profile")
+        loginButton.registerCallback(mFbCallbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(loginResult: LoginResult) {
+                //Log.d(FragmentActivity.TAG, "facebook:onSuccess:" + loginResult)
+                signInFacebook(loginResult.accessToken)
+            }
+
+            override fun onCancel() {
+                Log.d(TAG, "facebook:onCancel")
+                // ...
+            }
+
+            override fun onError(error: FacebookException) {
+                Log.d(TAG, "facebook:onError", error)
+                // ...
+            }
+        })
 
         btn_twitter.callback = object : Callback<TwitterSession>() {
             override fun success(result: Result<TwitterSession>) {
-                //Log.d(FragmentActivity.TAG, "twitterLogin:success" + result)
-                handleTwitterSession(result.data)
+                Log.d(TAG, "twitterLogin:success" + result)
+                signInTwitter(result.data)
             }
 
             override fun failure(exception: TwitterException) {
-                //Log.w(FragmentActivity.TAG, "twitterLogin:failure", exception)
+                Log.w(TAG, "twitterLogin:failure", exception)
                 //updateUI(null)
             }
         }
 
+        //GitHub button click listener
         btn_github.setOnClickListener {
             signInGitHub()
         }
@@ -72,31 +149,22 @@ class ConnectionActivity : FragmentActivity() {
                 .addPathSegment("oauth")
                 .addPathSegment("authorize")
                 .addQueryParameter("client_id", getString(R.string.github_id))
-                .addQueryParameter("redirect_uri", REDIRECT_URL_CALLBACK)
+                .addQueryParameter("redirect_uri", getString(R.string.github_app_url))
                 .addQueryParameter("state", BigInteger(130, Random()).toString(32))
                 .addQueryParameter("scope", "user:email")
                 .build()
 
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(httpUrl.toString()))
         startActivity(intent)
-
-        var uri = getIntent().data
-        if(uri != null && uri.toString().startsWith(REDIRECT_URL_CALLBACK)){
-            val code = uri.getQueryParameter("code")
-            val state = uri.getQueryParameter("state")
-            if(code != null && state != null){
-                sendPost(code, state)
-            }
-        }
     }
 
     private fun sendPost(code: String, state: String) {
         val okHttpClient = OkHttpClient()
-        var form = FormBody.Builder()
+        val form = FormBody.Builder()
                 .add("client_id", getString(R.string.github_id))
                 .add("client_secret", getString(R.string.github_secret))
                 .add("code", code)
-                .add("redirect_uri", REDIRECT_URL_CALLBACK)
+                .add("redirect_uri", getString(R.string.github_app_url))
                 .add("state", state)
                 .build()
         val request = Request.Builder()
@@ -111,79 +179,104 @@ class ConnectionActivity : FragmentActivity() {
 
             override fun onResponse(call: Call?, response: Response?) {
                 val responseBody = response!!.body().string()
-                val splitted = responseBody.split("=|&")
-                if(splitted[0] == "access_token") {
-                    signInWithToken(splitted[1])
+                val split = responseBody.split("[=&]".toRegex())
+                if(split[0] == "access_token") {
+                    signInGitHub(split[1])
                 } else {
-                    Toast.makeText(applicationContext, responseBody, Toast.LENGTH_LONG).show()
+                    //Toast.makeText(context, responseBody, Toast.LENGTH_LONG).show()
                 }
             }
 
         })
     }
 
-    fun signInWithToken(token: String){
-        val cred = GithubAuthProvider.getCredential(token)
-        mAuth.signInWithCredential(cred)
-                .addOnCompleteListener({
-                    if(!it.isSuccessful) {
-                        it.exception!!.printStackTrace()
-                    }
-                })
+    private fun signInGoogle(token: String){
+        val cred = GoogleAuthProvider.getCredential(token, null)
+        signInWithCredential(cred)
     }
 
-    private fun handleTwitterSession(session: TwitterSession) {
-        //Log.d(FragmentActivity.TAG, "handleTwitterSession:" + session)
+    /** Facebook credentials */
+    private fun signInFacebook(token: AccessToken) {
+        val cred = FacebookAuthProvider.getCredential(token.token)
+        signInWithCredential(cred)
+    }
 
-        val credential = TwitterAuthProvider.getCredential(
-                session.authToken.token,
-                session.authToken.secret)
+    /** GitHub credentials */
+    fun signInGitHub(token: String){
+        val cred = GithubAuthProvider.getCredential(token)
+        signInWithCredential(cred)
+    }
 
+    /** Twitter credentials */
+    private fun signInTwitter(session: TwitterSession) {
+        val cred = TwitterAuthProvider.getCredential(session.authToken.token, session.authToken.secret)
+        signInWithCredential(cred)
+
+    }
+
+    /** FirebaseAuth sign-in with credentials from third parties */
+    private fun signInWithCredential(credential: AuthCredential){
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, { task ->
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
-                        //Log.d(FragmentActivity.TAG, "signInWithCredential:success")
+                        Log.d(TAG, "signInWithCredential:success")
                         //val user = mAuth.currentUser
                         //updateUI(user)
-                        // Launches MainActivity
-                        startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
+                        startMainActivity()
                     } else {
-                        // If sign in fails, display a message to the user.
-                        //Log.w(FragmentActivity.TAG, "signInWithCredential:failure", task.getException())
-                        Toast.makeText(this, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show()
-                        //updateUI(null)
+                        if(task.exception is FirebaseAuthUserCollisionException) {
+                            mAuth.currentUser?.linkWithCredential(credential)
+                                    ?.addOnCompleteListener{
+                                        if (it.isSuccessful) {
+                                            startMainActivity()
+                                        } else {
+                                            mAuth.currentUser?.unlink(mAuth.currentUser!!.providerId)
+                                            //Log.w(TAG, "linkWithCredential:failure", task.exception)
+                                            Toast.makeText(this, "Account unlinked because of conflicts. Please retry.", Toast.LENGTH_LONG).show()
+                                        }
+
+                                    }
+                            //updateUI(null)
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithCredential:failure", task.exception)
+                            Toast.makeText(this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     // ...
                 })
     }
-        //startAuthActivity()
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when(requestCode){
             RC_LOGOUT -> {
+                mGoogleSignInClient.signOut()
                 FirebaseAuth.getInstance().signOut()
             }
             RC_GOOGLE -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    // Launches MainActivity
-                    startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
+                    startMainActivity()
                 } else {
                     // Sign in failed, check response for error code
                     Toast.makeText(applicationContext, getString(R.string.connectionfail), Toast.LENGTH_SHORT).show()
                 }
             }
-            RC_FACEBOOK -> {
-
-            }
-            RC_TWITTER -> {
+            Twitter.getInstance().twitterAuthConfig.requestCode -> {
                 btn_twitter.onActivityResult(requestCode, resultCode, data)
             }
         }
+        if(FacebookSdk.isFacebookRequestCode(requestCode)){
+            mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
+        }
 
+    }
+
+    private fun startMainActivity(){
+        startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
     }
 
 
