@@ -35,10 +35,13 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
+import com.hernandez.mickael.go4lunch.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
@@ -164,18 +167,42 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
                 mListFragment.resetList()
-
                 // Restaurants filter
-                val filter = AutocompleteFilter.Builder().setTypeFilter(Place.TYPE_RESTAURANT).build()
+                val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
 
                 // Places Autocomplete result
                 val result = Places.GeoDataApi.getAutocompletePredictions(
-                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 1000.0), filter)
+                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 10000.0), filter)
                 result.setResultCallback {
                     it.forEach {
                         Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
-                            mListFragment.addPlace(it[0])
+                            // Restaurant object init
+                            val res = Restaurant(it[0])
+
+                            // Distance between last location and restaurant
+                            val distance = floatArrayOf(0f)
+                            Location.distanceBetween(it[0].latLng.latitude, it[0].latLng.longitude,
+                                    mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                                    distance)
+                            res.distance = distance[0]
+
+                            // Map marker
+                            val marker = MarkerOptions()
+                            marker.position(it[0].latLng)
+                            mMap.addMarker(marker)
+
+                            // Get photo
+                            Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, res.id).setResultCallback {
+                                if(it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                    it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                        res.img = it.bitmap
+                                        mListFragment.addRestaurant(res)
+                                    }
+                                }
+                            }
+
                         }
+
                     }
                     it.release()
                 }

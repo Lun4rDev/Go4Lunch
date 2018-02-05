@@ -8,5 +8,5 @@
     <dimen name="button_login_height">38dp</dimen>
     <dimen name="button_login_margin">5dp</dimen>
 
-    <dimen name="row_height">150dp</dimen>
+    <dimen name="row_height">80dp</dimen>
 </resources>

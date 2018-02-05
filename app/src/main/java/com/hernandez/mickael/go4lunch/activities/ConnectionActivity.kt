@@ -26,28 +26,26 @@ import com.google.firebase.auth.AuthCredential
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseUser
 
-
-
-
-
-
-
-
 /**
  * Created by Mickael Hernandez on 31/01/2018.
  */
 class ConnectionActivity : FragmentActivity() {
     val TAG = "DEBUGTAG"
+
+    /** Request codes */
     val RC_LOGOUT = 456
     val RC_GOOGLE = 123
     val RC_FACEBOOK = 64206
 
+    /** Firebase auth instance */
     private var mAuth = FirebaseAuth.getInstance()
 
     private lateinit var mAuthStateListener : FirebaseAuth.AuthStateListener
 
+    /** Facebook callback manager */
     private lateinit var mFbCallbackManager: CallbackManager
 
+    /** Google sign-in client */
     private lateinit var mGoogleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,12 +69,13 @@ class ConnectionActivity : FragmentActivity() {
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
-        //// Recovering signed-in Facebook account
-        /*val fbToken = AccessToken.getCurrentAccessToken()
+        // Recovering Facebook account
+        val fbToken = AccessToken.getCurrentAccessToken()
         if(fbToken != null){
             signInFacebook(fbToken)
-        }*/
+        }
 
+        // Recovering Google account
         val account = GoogleSignIn.getLastSignedInAccount(this)
         if(account != null){
             signInGoogle(account.idToken.toString())
@@ -92,15 +91,13 @@ class ConnectionActivity : FragmentActivity() {
         // Build a GoogleSignInClient with the options specified by gso.
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
 
+        // Google sign-in button
         btn_google.setOnClickListener {
             val signInIntent = mGoogleSignInClient.signInIntent
             startActivityForResult(signInIntent, RC_GOOGLE)
         }
 
-
-
-
-        // Initialize Facebook Login button
+        // Facebook sign-in button
         mFbCallbackManager = CallbackManager.Factory.create()
         val loginButton = findViewById<LoginButton>(R.id.btn_facebook)
         loginButton.setReadPermissions("email", "public_profile")
@@ -121,6 +118,7 @@ class ConnectionActivity : FragmentActivity() {
             }
         })
 
+        // Twitter sign-in button
         btn_twitter.callback = object : Callback<TwitterSession>() {
             override fun success(result: Result<TwitterSession>) {
                 Log.d(TAG, "twitterLogin:success" + result)
@@ -133,31 +131,26 @@ class ConnectionActivity : FragmentActivity() {
             }
         }
 
-        //GitHub button click listener
+        //GitHub sign-in button
         btn_github.setOnClickListener {
-            signInGitHub()
+            val httpUrl = HttpUrl.Builder()
+                    .scheme("http")
+                    .host("github.com")
+                    .addPathSegment("login")
+                    .addPathSegment("oauth")
+                    .addPathSegment("authorize")
+                    .addQueryParameter("client_id", getString(R.string.github_id))
+                    .addQueryParameter("redirect_uri", getString(R.string.github_app_url))
+                    .addQueryParameter("state", BigInteger(130, Random()).toString(32))
+                    .addQueryParameter("scope", "user:email")
+                    .build()
+
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(httpUrl.toString()))
+            startActivity(intent)
         }
-
-
     }
 
-    private fun signInGitHub() {
-        val httpUrl = HttpUrl.Builder()
-                .scheme("http")
-                .host("github.com")
-                .addPathSegment("login")
-                .addPathSegment("oauth")
-                .addPathSegment("authorize")
-                .addQueryParameter("client_id", getString(R.string.github_id))
-                .addQueryParameter("redirect_uri", getString(R.string.github_app_url))
-                .addQueryParameter("state", BigInteger(130, Random()).toString(32))
-                .addQueryParameter("scope", "user:email")
-                .build()
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(httpUrl.toString()))
-        startActivity(intent)
-    }
-
+    /** Send POST request to GitHub with OkHttp3 */
     private fun sendPost(code: String, state: String) {
         val okHttpClient = OkHttpClient()
         val form = FormBody.Builder()
@@ -250,6 +243,11 @@ class ConnectionActivity : FragmentActivity() {
                 })
     }
 
+    /** Start MainActivity for result */
+    private fun startMainActivity(){
+        startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when(requestCode){
@@ -258,7 +256,7 @@ class ConnectionActivity : FragmentActivity() {
                 FirebaseAuth.getInstance().signOut()
             }
             RC_GOOGLE -> {
-                if (resultCode == Activity.RESULT_OK) {
+                if (resultCode == RESULT_OK) {
                     startMainActivity()
                 } else {
                     // Sign in failed, check response for error code
@@ -269,14 +267,11 @@ class ConnectionActivity : FragmentActivity() {
                 btn_twitter.onActivityResult(requestCode, resultCode, data)
             }
         }
-        if(FacebookSdk.isFacebookRequestCode(requestCode)){
+        if(FacebookSdk.isFacebookRequestCode(requestCode) && resultCode == RESULT_OK){
             mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
+            startMainActivity()
         }
 
-    }
-
-    private fun startMainActivity(){
-        startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
     }
 
 
