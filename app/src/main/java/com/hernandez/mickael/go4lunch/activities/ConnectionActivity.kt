@@ -53,6 +53,10 @@ class ConnectionActivity : FragmentActivity() {
         // Inflates the layout
         setContentView(R.layout.activity_connection)
 
+        if(FirebaseAuth.getInstance().currentUser != null){
+            startMainActivity()
+        }
+
         // Catches GitHub auth intent
         var uri = intent.data
         if(uri != null && uri.toString().startsWith(getString(R.string.github_app_url))){
@@ -204,7 +208,6 @@ class ConnectionActivity : FragmentActivity() {
     private fun signInTwitter(session: TwitterSession) {
         val cred = TwitterAuthProvider.getCredential(session.authToken.token, session.authToken.secret)
         signInWithCredential(cred)
-
     }
 
     /** FirebaseAuth sign-in with credentials from third parties */

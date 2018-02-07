@@ -31,4 +31,7 @@
     <string name="disconnected">You have been successfully disconnected.</string>
     <string name="connectionfail">Connection failed</string>
     <string name="google_web_client_id">85975384709–1p2rka40di3v2q26i7mfj3q67dn6226c.apps.googleusercontent.com</string>
+    <string name="action_call">Call</string>
+    <string name="action_like">Like</string>
+    <string name="action_website">Website</string>
 </resources>

@@ -1,8 +1,6 @@
 package com.hernandez.mickael.go4lunch.activities
 
-import android.app.SearchManager
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
@@ -15,33 +13,27 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Menu
 import android.view.MenuItem
 import android.widget.SearchView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.common.api.PendingResult
-import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.places.*
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
-import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.Restaurant
+import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
@@ -176,33 +168,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 result.setResultCallback {
                     it.forEach {
                         Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
-                            // Restaurant object init
-                            val res = Restaurant(it[0])
+                            if(it.count > 0){
+                                // Restaurant object init
+                                val place = it[0]
+                                // Distance between last location and restaurant
+                                val distance = floatArrayOf(0f)
+                                Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
+                                        mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                                        distance)
 
-                            // Distance between last location and restaurant
-                            val distance = floatArrayOf(0f)
-                            Location.distanceBetween(it[0].latLng.latitude, it[0].latLng.longitude,
-                                    mLastKnownLocation.latitude, mLastKnownLocation.longitude,
-                                    distance)
-                            res.distance = distance[0]
+                                // Map marker
+                                val marker = MarkerOptions()
+                                marker.position(place.latLng)
+                                mMap.addMarker(marker)
 
-                            // Map marker
-                            val marker = MarkerOptions()
-                            marker.position(it[0].latLng)
-                            mMap.addMarker(marker)
-
-                            // Get photo
-                            Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, res.id).setResultCallback {
-                                if(it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                    it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                        res.img = it.bitmap
-                                        mListFragment.addRestaurant(res)
+                                // Get photo
+                                Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
+                                    if(it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                        it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                            val res = Restaurant(place, distance[0], it.bitmap)
+                                            mListFragment.addRestaurant(res)
+                                        }
                                     }
                                 }
                             }
-
                         }
-
                     }
                     it.release()
                 }

@@ -7,9 +7,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import com.google.android.gms.location.places.Place
 import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.Restaurant
+import com.hernandez.mickael.go4lunch.model.Restaurant
 
 
 /**
