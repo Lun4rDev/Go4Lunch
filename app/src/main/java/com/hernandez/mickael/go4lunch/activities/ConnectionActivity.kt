@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.support.v4.app.DialogFragment
 import android.support.v4.app.FragmentActivity
 import android.util.Log
 import android.widget.Toast
@@ -25,18 +26,19 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.AuthCredential
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseUser
+import com.hernandez.mickael.go4lunch.dialogs.EmailDialogFragment
 
 /**
  * Created by Mickael Hernandez on 31/01/2018.
  */
-class ConnectionActivity : FragmentActivity() {
+class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogListener {
     val TAG = "DEBUGTAG"
 
     /** Request codes */
     val RC_LOGOUT = 456
+
     val RC_GOOGLE = 123
     val RC_FACEBOOK = 64206
-
     /** Firebase auth instance */
     private var mAuth = FirebaseAuth.getInstance()
 
@@ -152,6 +154,27 @@ class ConnectionActivity : FragmentActivity() {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(httpUrl.toString()))
             startActivity(intent)
         }
+
+        btn_email.setOnClickListener {
+            val newFragment = EmailDialogFragment()
+            newFragment.show(supportFragmentManager, "missiles")
+
+        }
+    }
+
+    // Positive response from mail sign-in dialog
+    override fun onDialogPositiveClick(dialog: DialogFragment, email:String, password:String) {
+        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
+            startMainActivity()
+        }.addOnFailureListener {
+                    mAuth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
+                        startMainActivity()
+                    }
+                }
+    }
+
+    // Negative response from mail sign-in dialog
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
     }
 
     /** Send POST request to GitHub with OkHttp3 */

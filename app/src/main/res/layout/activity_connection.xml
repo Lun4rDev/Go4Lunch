@@ -20,17 +20,18 @@
         android:textSize="30sp"
         android:layout_marginBottom="20dp"/>
 
+    <com.facebook.login.widget.LoginButton
+    android:id="@+id/btn_facebook"
+    android:layout_width="@dimen/button_login_width"
+    android:layout_height="@dimen/button_login_height"
+    android:layout_margin="@dimen/button_login_margin"/>
+
     <com.google.android.gms.common.SignInButton
         android:id="@+id/btn_google"
         android:layout_width="@dimen/button_login_width"
         android:layout_height="@dimen/button_login_height"
         android:layout_margin="@dimen/button_login_margin"/>
 
-    <com.facebook.login.widget.LoginButton
-        android:id="@+id/btn_facebook"
-        android:layout_width="@dimen/button_login_width"
-        android:layout_height="@dimen/button_login_height"
-        android:layout_margin="@dimen/button_login_margin"/>
 
     <com.twitter.sdk.android.core.identity.TwitterLoginButton
         android:id="@+id/btn_twitter"
@@ -44,9 +45,22 @@
         android:layout_height="wrap_content"
         android:width="@dimen/button_login_width"
         android:height="@dimen/button_login_height"
+        android:layout_margin="@dimen/button_login_margin"
         android:drawableStart="@drawable/ic_github_white"
         android:background="#000"
         android:text="GitHub"
+        android:textColor="#fff"/>
+
+    <Button
+        android:id="@+id/btn_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:width="@dimen/button_login_width"
+        android:height="@dimen/button_login_height"
+        android:layout_margin="@dimen/button_login_margin"
+        android:drawableStart="@drawable/ic_email_white"
+        android:background="@color/colorDrawer"
+        android:text="@string/email_and_password"
         android:textColor="#fff"/>
 
 

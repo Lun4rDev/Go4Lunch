@@ -7,4 +7,17 @@
     <string name="connection">Connexion</string>
     <string name="disconnected">Vous avez été deconnecté avec succès.</string>
     <string name="connectionfail">La connexion a échoué</string>
+    <string name="email_and_password">Email et mot de passe</string>
+    <string name="action_call">Appeler</string>
+    <string name="action_like">Aimer</string>
+    <string name="action_website">Site web</string>
+    <string name="item_logout">DECONNEXION</string>
+    <string name="item_settings">PARAMETRES</string>
+    <string name="item_lunch">VOTRE SELECTION</string>
+    <string name="navigation_drawer_open">Ouvrir le tiroir de navigation</string>
+    <string name="navigation_drawer_close">Fermer le tiroir de navigation</string>
+    <string name="password">Mot de passe</string>
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="signin">Sign in</string>
+    <string name="cancel">Cancel</string>
 </resources>

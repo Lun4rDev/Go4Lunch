@@ -47,6 +47,11 @@ class RestaurantActivity : AppCompatActivity() {
             }
         }
 
+        // Disable website button if there's none
+        if(mRestaurant.website == null || mRestaurant.website == ""){
+            button_website.isEnabled = false
+        }
+
         // Website button listener
         button_website.setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(mRestaurant.website))

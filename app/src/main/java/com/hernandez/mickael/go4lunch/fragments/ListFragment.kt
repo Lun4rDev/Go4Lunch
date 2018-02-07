@@ -49,7 +49,9 @@ class ListFragment : Fragment() {
 
     fun resetList(){
         placesList.clear()
-        mAdapter.notifyDataSetChanged()
+        if(!mAdapter.isEmpty){
+            mAdapter.notifyDataSetChanged()
+        }
     }
     fun addRestaurant(place: Restaurant){
         placesList.add(place)
