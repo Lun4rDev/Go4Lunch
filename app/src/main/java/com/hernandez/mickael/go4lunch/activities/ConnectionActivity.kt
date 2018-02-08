@@ -164,13 +164,19 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     // Positive response from mail sign-in dialog
     override fun onDialogPositiveClick(dialog: DialogFragment, email:String, password:String) {
-        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
-            startMainActivity()
-        }.addOnFailureListener {
-                    mAuth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
+        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
+            if(it.isSuccessful){
+                startMainActivity()
+            } else {
+                mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
+                    if(it.isSuccessful){
                         startMainActivity()
+                    } else {
+                        Toast.makeText(applicationContext, getString(R.string.email_signin_fail), Toast.LENGTH_LONG).show()
                     }
                 }
+            }
+        }
     }
 
     // Negative response from mail sign-in dialog

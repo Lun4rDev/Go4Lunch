@@ -39,4 +39,7 @@
     <string name="password">Password</string>
     <string name="signin">Sign in</string>
     <string name="cancel">Cancel</string>
+    <string name="email_signin_fail">Failed to sign in and to sign up. Did you enter a valid e-mail address ?</string>
+    <string name="RESTAURANT_ID_KEY">RESTAURANT_ID_KEY</string>
+    <string name="RESTAURANT_ID_CHANGE">RESTAURANT_ID_CHANGE</string>
 </resources>

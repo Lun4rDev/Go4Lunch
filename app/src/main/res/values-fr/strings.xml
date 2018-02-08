@@ -20,4 +20,5 @@
     <string name="username">Nom d\'utilisateur</string>
     <string name="signin">Sign in</string>
     <string name="cancel">Cancel</string>
+    <string name="email_signin_fail">Echec de connexion et d\'inscription. Avez-vous entré une adresse e-mail valide ?</string>
 </resources>

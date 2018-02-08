@@ -1,6 +1,7 @@
 package com.hernandez.mickael.go4lunch.activities
 
 import android.Manifest
+import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.CollapsingToolbarLayout
 import android.support.v7.app.AppCompatActivity
@@ -13,7 +14,9 @@ import kotlinx.android.synthetic.main.activity_restaurant.*
 import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.pm.SharedLibraryInfo
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -24,13 +27,24 @@ import android.support.v4.content.ContextCompat
  */
 class RestaurantActivity : AppCompatActivity() {
 
+    val RC_SELECT = 789
+
     lateinit var mRestaurant: Restaurant
+
+    lateinit var mSharedPrefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_restaurant)
+
+        // Shared Preferences
+        mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
+
+        // Get Restaurant object from intent
         mRestaurant = intent.getParcelableExtra("Restaurant")
         mRestaurant.img = BitmapFactory.decodeByteArray(intent.getByteArrayExtra("Image"), 0, intent.getByteArrayExtra("Image").size)
+
+        // Setting UI according to Restaurant object
         restaurant_img.setImageBitmap(mRestaurant.img)
         //findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbar).title = mRestaurant.name
         restaurant_name.text = mRestaurant.name
@@ -56,6 +70,12 @@ class RestaurantActivity : AppCompatActivity() {
         button_website.setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(mRestaurant.website))
             startActivity(intent)
+        }
+
+        // Float action button listener
+        fab_select.setOnClickListener {
+            mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_ID_CHANGE), true).apply()
+            mSharedPrefs.edit().putString(getString(R.string.RESTAURANT_ID_KEY), mRestaurant.id).apply()
         }
     }
 }

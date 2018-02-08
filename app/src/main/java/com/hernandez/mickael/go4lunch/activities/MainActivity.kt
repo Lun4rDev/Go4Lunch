@@ -31,12 +31,16 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
+import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -45,7 +49,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     val RC_SIGN_IN = 123
 
     val RC_LOGOUT = 456
+
+    val RC_SELECT = 789
+
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+
+    /** Personal Firestore document reference */
+    lateinit var mDocRef: DocumentReference
+
+    /** Users Firestore collection reference */
+    lateinit var mColRef: CollectionReference
+
     /** Shared preferences */
     lateinit var mSharedPrefs : SharedPreferences
 
@@ -154,7 +168,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
         val searchView = si.actionView as SearchView
-
         // Toolbar search listener
         searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -214,7 +227,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
             override fun onError(p0: Status?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
             }
 
         }
@@ -226,9 +238,48 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
             navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
             Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
+            mColRef = FirebaseFirestore.getInstance().collection("users")
+            mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        mColRef.addSnapshotListener(this) { colSnapshot, firebaseFirestoreException ->
+            if(!colSnapshot.isEmpty){
+                val res = colSnapshot.documents.map { it.toObject(Workmate::class.java) }
+                // TODO : Pass res to workmates list
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateFirestoreData()
+    }
+
+    private fun updateFirestoreData(){
+        val hMap = HashMap<String, Any>()
+        hMap["uid"] = mUser!!.uid
+        hMap["displayName"] = mUser!!.displayName.toString()
+        hMap["photoUrl"] = mUser!!.photoUrl.toString()
+        if(mSharedPrefs.getBoolean(getString(R.string.RESTAURANT_ID_CHANGE), false)){
+            val resId = mSharedPrefs.getString(getString(R.string.RESTAURANT_ID_KEY), "")
+            if(resId != null){
+                hMap["restaurantId"] = resId
+            }
+        }
+        mDocRef.set(hMap)/*.addOnCompleteListener {
+            if(it.isSuccessful){
+                Toast.makeText(applicationContext, "The restaurant has successfully been selected.", Toast.LENGTH_SHORT).show()
+                mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_ID_CHANGE), false).apply()
+            } else {
+                Toast.makeText(applicationContext, "An error occurred when selecting restaurant.", Toast.LENGTH_SHORT).show()
+            }
+        }*/
+    }
+
+    /** On Google Map ready */
     override fun onMapReady(p0: GoogleMap?) {
         mMap = p0!!
         mMap.uiSettings.isMyLocationButtonEnabled = true
@@ -242,6 +293,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
+    /** Get permission to access device location */
     private fun getLocationPermission() {
         /*
        * Request location permission, so that we can get the location of the
@@ -342,4 +394,5 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onConnectionFailed(p0: ConnectionResult) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
 }
