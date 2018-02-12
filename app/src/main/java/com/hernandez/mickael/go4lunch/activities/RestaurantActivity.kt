@@ -3,20 +3,14 @@ package com.hernandez.mickael.go4lunch.activities
 import android.Manifest
 import android.content.Context
 import android.os.Bundle
-import android.support.design.widget.CollapsingToolbarLayout
 import android.support.v7.app.AppCompatActivity
-import android.widget.ImageView
-import android.widget.TextView
 import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.model.BitmapDataObject
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import kotlinx.android.synthetic.main.activity_restaurant.*
 import android.graphics.BitmapFactory
-import android.graphics.Bitmap
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.content.pm.SharedLibraryInfo
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -74,8 +68,9 @@ class RestaurantActivity : AppCompatActivity() {
 
         // Float action button listener
         fab_select.setOnClickListener {
-            mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_ID_CHANGE), true).apply()
-            mSharedPrefs.edit().putString(getString(R.string.RESTAURANT_ID_KEY), mRestaurant.id).apply()
+            mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_CHANGE), true).apply()
+            mSharedPrefs.edit().putStringSet(getString(R.string.RESTAURANT_VALUES), setOf(mRestaurant.id.toString(), mRestaurant.name.toString()) as MutableSet<String>?).apply()
+            finish()
         }
     }
 }

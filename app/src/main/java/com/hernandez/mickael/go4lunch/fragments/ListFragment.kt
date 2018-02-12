@@ -27,7 +27,7 @@ class ListFragment : Fragment() {
     private lateinit var mAdapter : RestaurantListAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        var convertView = inflater.inflate(R.layout.fragment_list, container, false)
+        val convertView = inflater.inflate(R.layout.fragment_list, container, false)
 
         // Setting up adapter with arrayList and listView
         mAdapter = RestaurantListAdapter(context!!, R.layout.row_place, placesList)

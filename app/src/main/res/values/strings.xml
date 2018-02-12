@@ -40,6 +40,8 @@
     <string name="signin">Sign in</string>
     <string name="cancel">Cancel</string>
     <string name="email_signin_fail">Failed to sign in and to sign up. Did you enter a valid e-mail address ?</string>
-    <string name="RESTAURANT_ID_KEY">RESTAURANT_ID_KEY</string>
-    <string name="RESTAURANT_ID_CHANGE">RESTAURANT_ID_CHANGE</string>
+    <string name="RESTAURANT_VALUES">RESTAURANT_VALUES</string>
+    <string name="RESTAURANT_CHANGE">RESTAURANT_CHANGE</string>
+    <string name="text_workmate">%1$s is eating at %2$s</string>
+    <string name="text_notdecided">%1$s hasn\'t decided yet</string>
 </resources>

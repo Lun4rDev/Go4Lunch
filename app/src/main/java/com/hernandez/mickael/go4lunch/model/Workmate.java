@@ -19,11 +19,17 @@ public class Workmate implements Parcelable {
     // Restaurant ID
     public String restaurantId;
 
-    private Workmate(String pUid, String pDisplayName, String pPhotoUrl, String pRestaurantId){
+    // Restaurant name
+    public String restaurantName;
+
+    private Workmate(){}
+
+    private Workmate(String pUid, String pDisplayName, String pPhotoUrl, String pRestaurantId, String pRestaurantName){
         uid = pUid;
         displayName = pDisplayName;
         photoUrl = pPhotoUrl;
         restaurantId = pRestaurantId;
+        restaurantName = pRestaurantName;
     }
 
     private Workmate(Parcel in) {
@@ -31,6 +37,7 @@ public class Workmate implements Parcelable {
         displayName = in.readString();
         photoUrl = in.readString();
         restaurantId = in.readString();
+        restaurantName = in.readString();
     }
 
     public static final Creator<Workmate> CREATOR = new Creator<Workmate>() {
@@ -56,5 +63,6 @@ public class Workmate implements Parcelable {
         parcel.writeString(displayName);
         parcel.writeString(photoUrl);
         parcel.writeString(restaurantId);
+        parcel.writeString(restaurantName);
     }
 }

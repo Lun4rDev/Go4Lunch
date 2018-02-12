@@ -31,7 +31,6 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.SphericalUtil
@@ -39,7 +38,7 @@ import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
-import com.hernandez.mickael.go4lunch.fragments.PeopleFragment
+import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -55,10 +54,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
     /** Personal Firestore document reference */
-    lateinit var mDocRef: DocumentReference
+    lateinit var mDocRef : DocumentReference
 
     /** Users Firestore collection reference */
-    lateinit var mColRef: CollectionReference
+    var mColRef = FirebaseFirestore.getInstance().collection("users")
 
     /** Shared preferences */
     lateinit var mSharedPrefs : SharedPreferences
@@ -118,6 +117,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val mListFragment = ListFragment()
 
+    private val mWorkmatesFragment = WorkmatesFragment()
+
     /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -154,7 +155,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
         pagerAdapter.addFragments(mMapFragment)
         pagerAdapter.addFragments(mListFragment)
-        pagerAdapter.addFragments(PeopleFragment())
+        pagerAdapter.addFragments(mWorkmatesFragment)
+
         viewPager.adapter = pagerAdapter
 
         // Drawer configuration
@@ -234,23 +236,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
-        if(mUser != null){
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
-            Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
-            mColRef = FirebaseFirestore.getInstance().collection("users")
-            mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
+        Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
+        mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+        mColRef.addSnapshotListener(this) { colSnapshot, firebaseFirestoreException ->
+            if(colSnapshot.documents.isNotEmpty()){
+                val res = ArrayList<Workmate>()
+                for(doc in colSnapshot.documents){
+                    if(doc != null && doc.exists()){
+                        res.add(doc.toObject(Workmate::class.java))
+                    }
+                }
+                mWorkmatesFragment.setWorkmates(res)
+            }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        mColRef.addSnapshotListener(this) { colSnapshot, firebaseFirestoreException ->
-            if(!colSnapshot.isEmpty){
-                val res = colSnapshot.documents.map { it.toObject(Workmate::class.java) }
-                // TODO : Pass res to workmates list
-            }
-        }
+
     }
 
     override fun onResume() {
@@ -258,15 +263,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         updateFirestoreData()
     }
 
+    /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
         val hMap = HashMap<String, Any>()
         hMap["uid"] = mUser!!.uid
         hMap["displayName"] = mUser!!.displayName.toString()
         hMap["photoUrl"] = mUser!!.photoUrl.toString()
-        if(mSharedPrefs.getBoolean(getString(R.string.RESTAURANT_ID_CHANGE), false)){
-            val resId = mSharedPrefs.getString(getString(R.string.RESTAURANT_ID_KEY), "")
-            if(resId != null){
-                hMap["restaurantId"] = resId
+        if(mSharedPrefs.getBoolean(getString(R.string.RESTAURANT_CHANGE), false)){
+            val vals = mSharedPrefs.getStringSet(getString(R.string.RESTAURANT_VALUES), setOf())
+            if(vals != null){
+                hMap["restaurantName"] = vals.elementAt(0)
+                hMap["restaurantId"] = vals.elementAt(1)
             }
         }
         mDocRef.set(hMap)/*.addOnCompleteListener {
