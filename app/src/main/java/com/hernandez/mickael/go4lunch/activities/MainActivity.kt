@@ -1,8 +1,10 @@
 package com.hernandez.mickael.go4lunch.activities
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
@@ -16,6 +18,7 @@ import android.util.Log
 import android.view.MenuItem
 import android.widget.SearchView
 import android.widget.TextView
+import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -40,6 +43,7 @@ import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.ByteArrayOutputStream
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
@@ -252,6 +256,39 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
     }
+    fun displayRestaurant(placeId: String){
+        Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId).setResultCallback {
+            if(it.count > 0){
+                // Restaurant object init
+                val place = it[0]
+                // Distance between last location and restaurant
+                val distance = floatArrayOf(0f)
+                Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
+                        mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                        distance)
+
+                // Map marker
+                val marker = MarkerOptions()
+                marker.position(place.latLng)
+                mMap.addMarker(marker)
+
+                // Get photo
+                Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
+                    if(it.photoMetadata != null && it.photoMetadata.count > 0) {
+                        it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                            val intent = Intent(applicationContext, RestaurantActivity::class.java)
+                            intent.putExtra("Restaurant", Restaurant(place, distance[0], it.bitmap))
+                            val bStream = ByteArrayOutputStream()
+                            it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
+                            val byteArray = bStream.toByteArray()
+                            intent.putExtra("Image", byteArray)
+                            startActivity(intent)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -366,7 +403,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     /** Handles click on a navigation drawer item */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
-            R.id.item_lunch -> {}
+            R.id.item_lunch -> {
+                mDocRef.get().addOnCompleteListener {
+                    if(it.isSuccessful){
+                        val id = it.result.getString("restaurantId")
+                        if(it.result.exists() && id != "") {
+                            displayRestaurant(id)
+                        } else {
+                            Toast.makeText(applicationContext, "You didn\'t select any restaurant.", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             R.id.item_settings -> {}
             R.id.item_logout -> {
                 finish()
