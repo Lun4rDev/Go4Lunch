@@ -31,8 +31,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.*
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
@@ -240,7 +239,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
         Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
         mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
-        mColRef.addSnapshotListener(this) { colSnapshot, firebaseFirestoreException ->
+        mColRef.addSnapshotListener { colSnapshot, p1 ->
             if(colSnapshot.documents.isNotEmpty()){
                 val res = ArrayList<Workmate>()
                 for(doc in colSnapshot.documents){
@@ -251,6 +250,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 mWorkmatesFragment.setWorkmates(res)
             }
         }
+
     }
 
     override fun onStart() {
@@ -269,21 +269,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         hMap["uid"] = mUser!!.uid
         hMap["displayName"] = mUser!!.displayName.toString()
         hMap["photoUrl"] = mUser!!.photoUrl.toString()
-        if(mSharedPrefs.getBoolean(getString(R.string.RESTAURANT_CHANGE), false)){
-            val vals = mSharedPrefs.getStringSet(getString(R.string.RESTAURANT_VALUES), setOf())
-            if(vals != null){
-                hMap["restaurantName"] = vals.elementAt(0)
-                hMap["restaurantId"] = vals.elementAt(1)
-            }
-        }
-        mDocRef.set(hMap)/*.addOnCompleteListener {
-            if(it.isSuccessful){
-                Toast.makeText(applicationContext, "The restaurant has successfully been selected.", Toast.LENGTH_SHORT).show()
-                mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_ID_CHANGE), false).apply()
-            } else {
-                Toast.makeText(applicationContext, "An error occurred when selecting restaurant.", Toast.LENGTH_SHORT).show()
-            }
-        }*/
+        mDocRef.update(hMap)
     }
 
     /** On Google Map ready */

@@ -14,6 +14,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 
 /**
@@ -26,6 +29,10 @@ class RestaurantActivity : AppCompatActivity() {
     lateinit var mRestaurant: Restaurant
 
     lateinit var mSharedPrefs: SharedPreferences
+
+    private var mUser = FirebaseAuth.getInstance().currentUser
+
+    private var mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,8 +75,21 @@ class RestaurantActivity : AppCompatActivity() {
 
         // Float action button listener
         fab_select.setOnClickListener {
+            val hMap = HashMap<String, Any>()
+            hMap["uid"] = mUser!!.uid
+            hMap["restaurantId"] = mRestaurant.id
+            hMap["restaurantName"] = mRestaurant.name
+            mDocRef.set(hMap).addOnCompleteListener {
+                if(it.isSuccessful){
+                    Toast.makeText(applicationContext, getString(R.string.select_success), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                }
+            }
+            /*
             mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_CHANGE), true).apply()
             mSharedPrefs.edit().putStringSet(getString(R.string.RESTAURANT_VALUES), setOf(mRestaurant.id.toString(), mRestaurant.name.toString()) as MutableSet<String>?).apply()
+            */
             finish()
         }
     }

@@ -23,4 +23,6 @@
     <string name="email_signin_fail">Echec de connexion et d\'inscription. Avez-vous entré une adresse e-mail valide ?</string>
     <string name="text_workmate">%1$s mange à %2$s</string>
     <string name="text_notdecided">%1$s n\'a pas encore décidé</string>
+    <string name="select_success">The restaurant has been successfully selected.</string>
+    <string name="error_occurred">An error occurred.</string>
 </resources>

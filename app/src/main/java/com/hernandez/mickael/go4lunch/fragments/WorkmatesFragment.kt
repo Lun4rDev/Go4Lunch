@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,9 @@ import com.hernandez.mickael.go4lunch.adapters.WorkmatesListAdapter
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
 import java.io.ByteArrayOutputStream
+import android.support.v7.widget.LinearLayoutManager
+
+
 
 /**
  * Created by Mickael Hernandez on 24/01/2018.
@@ -31,13 +35,19 @@ class WorkmatesFragment : Fragment() {
         // Inflate the layout for this fragment
         val convertView = inflater.inflate(R.layout.fragment_workmates, container, false)
 
+        // RecyclerView in layout
+        val recyclerView = convertView.findViewById<RecyclerView>(R.id.list_workmates)
+
         // Setting up list and its adapter
         mAdapter = WorkmatesListAdapter(context!!, R.layout.row_workmate, workmatesList)
-        convertView.findViewById<ListView>(R.id.list_workmates).adapter = mAdapter
+        val llm = LinearLayoutManager(context)
+        llm.orientation = LinearLayoutManager.VERTICAL
+        recyclerView.layoutManager = llm
+        recyclerView.adapter = mAdapter
 
         // Item click listener
-        convertView.findViewById<ListView>(R.id.list_workmates).setOnItemClickListener { adapterView, view, i, l ->
-
+        recyclerView.setOnClickListener {
+            // restoId = it.tag
         }
         return convertView
     }
