@@ -46,7 +46,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.io.ByteArrayOutputStream
 
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
     /** Sign-in intent code */
     val RC_SIGN_IN = 123
 
@@ -256,6 +256,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
     }
+
+    /** Displays restaurant according to its id */
     fun displayRestaurant(placeId: String){
         Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId).setResultCallback {
             if(it.count > 0){

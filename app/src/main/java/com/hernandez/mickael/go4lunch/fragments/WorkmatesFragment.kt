@@ -18,7 +18,7 @@ import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
 import java.io.ByteArrayOutputStream
 import android.support.v7.widget.LinearLayoutManager
-
+import com.hernandez.mickael.go4lunch.activities.MainActivity
 
 
 /**
@@ -29,6 +29,8 @@ class WorkmatesFragment : Fragment() {
     private var workmatesList = ArrayList<Workmate>()
 
     private lateinit var mAdapter: WorkmatesListAdapter
+
+    private lateinit var mainActivity: MainActivity
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -48,6 +50,7 @@ class WorkmatesFragment : Fragment() {
         // Item click listener
         recyclerView.setOnClickListener {
             // restoId = it.tag
+            (activity as MainActivity).displayRestaurant(it.tag.toString())
         }
         return convertView
     }

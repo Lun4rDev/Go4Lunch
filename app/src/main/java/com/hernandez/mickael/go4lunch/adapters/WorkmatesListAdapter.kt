@@ -11,6 +11,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.hernandez.mickael.go4lunch.R
+import com.hernandez.mickael.go4lunch.activities.MainActivity
+import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.row_workmate.view.*
@@ -34,8 +36,9 @@ open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        // Item (row)
         val item = mList[position]
-        //holder.tag = item.restaurantId
+
         // If this workmate hasn't picked a restaurant yet
         if(item.restaurantId == null){
             holder.textView.text = mContext.getString(R.string.text_notdecided, item.displayName)
@@ -49,8 +52,16 @@ open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList
         // Profile image
         Glide.with(mContext).load(item.photoUrl).into(holder.itemView.findViewById(R.id.image_workmate))
 
+        // Item click listener
+        holder.itemView.setOnClickListener {
+            if(item.restaurantId != null && item.restaurantId != ""){
+                (mContext as MainActivity).displayRestaurant(item.restaurantId)
+            }
+        }
+
     }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textView = itemView.text_workmate!!
     }
+
 }
