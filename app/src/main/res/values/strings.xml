@@ -48,4 +48,5 @@
     <string name="select_success">The restaurant has been successfully selected.</string>
     <string name="error_occurred">An error occurred.</string>
     <string name="list_placeholder">Use the search bar to find restaurants</string>
+    <string name="im_hungry">I\'m hungry !</string>
 </resources>

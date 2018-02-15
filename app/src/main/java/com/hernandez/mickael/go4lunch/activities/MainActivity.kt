@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
@@ -68,9 +69,6 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     /** Firebase user object */
     var mUser : FirebaseUser? = null
 
-    /** Navigation drawer */
-    lateinit var navView : NavigationView
-
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
 
@@ -88,16 +86,19 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             R.id.navigation_map -> {
                 //changeFragment(0)
                 viewPager.currentItem = 0
+                toolbar.title = getString(R.string.im_hungry)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_list -> {
                 //changeFragment(1)
                 viewPager.currentItem = 1
+                toolbar.title = getString(R.string.im_hungry)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_people -> {
                 //changeFragment(2)
                 viewPager.currentItem = 2
+                toolbar.title = getString(R.string.people_view)
                 return@OnNavigationItemSelectedListener true
             }
         }
@@ -151,8 +152,8 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Navigation drawer
-        navView = findViewById(R.id.nav_view)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        nav_view.setNavigationItemSelectedListener(this)
 
         // Bottom navigation view
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
@@ -169,8 +170,11 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
-        nav_view.setNavigationItemSelectedListener(this)
+
+        // Toolbar configuration
         toolbar.inflateMenu(R.menu.toolbar)
+        toolbar.setTitleTextColor(Color.WHITE)
+        toolbar.setTitle(R.string.im_hungry)
 
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
@@ -242,9 +246,9 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
-        Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(navView.getHeaderView(0).findViewById(R.id.img_user))
+        nav_view.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
+        nav_view.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
+        Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
         mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
         mColRef.addSnapshotListener { colSnapshot, p1 ->
             if(colSnapshot.documents.isNotEmpty()){

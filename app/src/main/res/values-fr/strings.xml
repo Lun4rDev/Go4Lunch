@@ -26,4 +26,5 @@
     <string name="select_success">Le restaurant a été sélectionné avec succès.</string>
     <string name="error_occurred">Une erreur est survenue.</string>
     <string name="list_placeholder">Utilisez la barre de recherche pour trouver des restaurants</string>
+    <string name="im_hungry">I\'m hungry !</string>
 </resources>
