@@ -150,17 +150,19 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         // Construct a FusedLocationProviderClient
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
-
-        // Bottom navigation view and adapter init
+        // Navigation drawer
         navView = findViewById(R.id.nav_view)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
-        viewPager.setPagingEnabled(false)
+
+        // Bottom navigation view
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
+        // Adding the 3 fragments
         pagerAdapter.addFragments(mMapFragment)
         pagerAdapter.addFragments(mListFragment)
         pagerAdapter.addFragments(mWorkmatesFragment)
-
+        // Setting the adapter
         viewPager.adapter = pagerAdapter
+        viewPager.setPagingEnabled(false)
 
         // Drawer configuration
         val toggle = ActionBarDrawerToggle(
@@ -173,6 +175,7 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
         val searchView = si.actionView as SearchView
+
         // Toolbar search listener
         searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -290,11 +293,6 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 }
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-
     }
 
     override fun onResume() {

@@ -17,6 +17,8 @@ import android.support.v4.content.ContextCompat
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hernandez.mickael.go4lunch.adapters.JoiningListAdapter
+import com.hernandez.mickael.go4lunch.model.Workmate
 
 
 /**
@@ -26,6 +28,9 @@ class RestaurantActivity : AppCompatActivity() {
 
     val RC_SELECT = 789
 
+    /** Users Firestore collection reference */
+    var mColRef = FirebaseFirestore.getInstance().collection("users")
+
     lateinit var mRestaurant: Restaurant
 
     lateinit var mSharedPrefs: SharedPreferences
@@ -33,6 +38,10 @@ class RestaurantActivity : AppCompatActivity() {
     private var mUser = FirebaseAuth.getInstance().currentUser
 
     private var mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+
+    private lateinit var mAdapter: JoiningListAdapter
+
+    private var mList = ArrayList<Workmate>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +59,23 @@ class RestaurantActivity : AppCompatActivity() {
         //findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbar).title = mRestaurant.name
         restaurant_name.text = mRestaurant.name
         restaurant_desc.text = mRestaurant.address
+
+        mAdapter = JoiningListAdapter(applicationContext, R.layout.row_workmate, mList)
+        list_workmates.adapter = mAdapter
+
+        mColRef.addSnapshotListener { colSnapshot, p1 ->
+            if(colSnapshot.documents.isNotEmpty()){
+                val res = ArrayList<Workmate>()
+                for(doc in colSnapshot.documents){
+                    if(doc.get("restaurantId") == mRestaurant.id){
+                        res.add(doc.toObject(Workmate::class.java))
+                    }
+                }
+                mList.clear()
+                mList.addAll(res)
+                mAdapter.notifyDataSetChanged()
+            }
+        }
 
         // Call button listener
         button_call.setOnClickListener {

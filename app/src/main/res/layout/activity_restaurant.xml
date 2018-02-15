@@ -107,7 +107,7 @@
                     style="@style/Widget.AppCompat.Button.Borderless"/>
             </LinearLayout>
 
-            <android.support.v7.widget.RecyclerView
+            <ListView
                 android:id="@+id/list_workmates"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>

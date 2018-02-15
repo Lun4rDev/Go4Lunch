@@ -5,7 +5,7 @@
     <string name="list_view">Liste</string>
     <string name="people_view">Collègues</string>
     <string name="connection">Connexion</string>
-    <string name="disconnected">Vous avez été deconnecté avec succès.</string>
+    <string name="disconnected">Vous avez été déconnecté avec succès.</string>
     <string name="connectionfail">La connexion a échoué</string>
     <string name="email_and_password">Email et mot de passe</string>
     <string name="action_call">Appeler</string>
@@ -18,11 +18,12 @@
     <string name="navigation_drawer_close">Fermer le tiroir de navigation</string>
     <string name="password">Mot de passe</string>
     <string name="username">Nom d\'utilisateur</string>
-    <string name="signin">Sign in</string>
-    <string name="cancel">Cancel</string>
+    <string name="signin">S\'identifier</string>
+    <string name="cancel">Annuler</string>
     <string name="email_signin_fail">Echec de connexion et d\'inscription. Avez-vous entré une adresse e-mail valide ?</string>
     <string name="text_workmate">%1$s mange à %2$s</string>
     <string name="text_notdecided">%1$s n\'a pas encore décidé</string>
-    <string name="select_success">The restaurant has been successfully selected.</string>
-    <string name="error_occurred">An error occurred.</string>
+    <string name="select_success">Le restaurant a été sélectionné avec succès.</string>
+    <string name="error_occurred">Une erreur est survenue.</string>
+    <string name="list_placeholder">Utilisez la barre de recherche pour trouver des restaurants</string>
 </resources>
