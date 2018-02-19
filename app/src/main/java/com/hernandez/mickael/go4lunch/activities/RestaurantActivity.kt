@@ -11,6 +11,8 @@ import android.graphics.BitmapFactory
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -27,6 +29,9 @@ import com.hernandez.mickael.go4lunch.model.Workmate
 class RestaurantActivity : AppCompatActivity() {
 
     val RC_SELECT = 789
+
+    /** If this restaurant is selected by the current user */
+    var mSelected = false
 
     /** Users Firestore collection reference */
     var mColRef = FirebaseFirestore.getInstance().collection("users")
@@ -63,12 +68,22 @@ class RestaurantActivity : AppCompatActivity() {
         mAdapter = JoiningListAdapter(applicationContext, R.layout.row_workmate, mList)
         list_workmates.adapter = mAdapter
 
+        // Text view for the empty list
+        list_workmates.emptyView = text_empty
+
+        // Getting workmates joining this restaurant from Firestore
         mColRef.addSnapshotListener { colSnapshot, p1 ->
             if(colSnapshot.documents.isNotEmpty()){
                 val res = ArrayList<Workmate>()
                 for(doc in colSnapshot.documents){
+                    // If this restaurant and the document restaurant corresponds
                     if(doc.get("restaurantId") == mRestaurant.id){
-                        res.add(doc.toObject(Workmate::class.java))
+                        // If it's the current user document
+                        if(doc.get("uid") == mUser!!.uid){
+                            updateUI(true)
+                        } else {
+                            res.add(doc.toObject(Workmate::class.java))
+                        }
                     }
                 }
                 mList.clear()
@@ -103,13 +118,26 @@ class RestaurantActivity : AppCompatActivity() {
         fab_select.setOnClickListener {
             val hMap = HashMap<String, Any>()
             hMap["uid"] = mUser!!.uid
-            hMap["restaurantId"] = mRestaurant.id
-            hMap["restaurantName"] = mRestaurant.name
-            mDocRef.set(hMap).addOnCompleteListener {
-                if(it.isSuccessful){
-                    Toast.makeText(applicationContext, getString(R.string.select_success), Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+            if(mSelected){
+                hMap["restaurantId"] = ""
+                hMap["restaurantName"] = ""
+                mDocRef.set(hMap).addOnCompleteListener {
+                    if(it.isSuccessful){
+                            Toast.makeText(applicationContext, getString(R.string.unselect_success), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+            } else {
+                hMap["restaurantId"] = mRestaurant.id
+                hMap["restaurantName"] = mRestaurant.name
+                mDocRef.set(hMap).addOnCompleteListener {
+                    if(it.isSuccessful){
+                        Toast.makeText(applicationContext, getString(R.string.select_success), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             /*
@@ -117,6 +145,17 @@ class RestaurantActivity : AppCompatActivity() {
             mSharedPrefs.edit().putStringSet(getString(R.string.RESTAURANT_VALUES), setOf(mRestaurant.id.toString(), mRestaurant.name.toString()) as MutableSet<String>?).apply()
             */
             finish()
+        }
+    }
+
+    private fun updateUI(selected: Boolean){
+        if(selected){
+            mSelected = true
+            // Configure fab for cancel button
+            fab_select.backgroundTintList = ColorStateList.valueOf(Color.RED)
+            fab_select.setImageResource(R.drawable.ic_cancel_white)
+        } else {
+            mSelected = false
         }
     }
 }

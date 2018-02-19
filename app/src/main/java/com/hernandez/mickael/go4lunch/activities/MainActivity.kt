@@ -17,6 +17,7 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.MenuItem
+import android.widget.EditText
 import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
@@ -30,9 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
@@ -79,31 +78,6 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     private lateinit var mMap : GoogleMap
 
     private var mLocationPermissionGranted = false
-
-    /** Bottom navigation click listener */
-    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_map -> {
-                //changeFragment(0)
-                viewPager.currentItem = 0
-                toolbar.title = getString(R.string.im_hungry)
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_list -> {
-                //changeFragment(1)
-                viewPager.currentItem = 1
-                toolbar.title = getString(R.string.im_hungry)
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_people -> {
-                //changeFragment(2)
-                viewPager.currentItem = 2
-                toolbar.title = getString(R.string.people_view)
-                return@OnNavigationItemSelectedListener true
-            }
-        }
-        false
-    }
 
     private lateinit var mGoogleApiClient: GoogleApiClient
 
@@ -152,7 +126,27 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Navigation drawer
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        navigation.setOnNavigationItemSelectedListener{
+            item ->
+            when (item.itemId) {
+                R.id.navigation_map -> {
+                    //changeFragment(0)
+                    viewPager.currentItem = 0
+                    toolbar.title = getString(R.string.im_hungry)
+                }
+                R.id.navigation_list -> {
+                    //changeFragment(1)
+                    viewPager.currentItem = 1
+                    toolbar.title = getString(R.string.im_hungry)
+                }
+                R.id.navigation_people -> {
+                    //changeFragment(2)
+                    viewPager.currentItem = 2
+                    toolbar.title = getString(R.string.people_view)
+                }
+            }
+            true
+        }
         nav_view.setNavigationItemSelectedListener(this)
 
         // Bottom navigation view
@@ -179,7 +173,9 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
         val searchView = si.actionView as SearchView
-
+        /*val searchText = searchView.findViewById<EditText>(android.support.v7.appcompat.R.id.search_src_text)
+        searchText.setTextColor(Color.WHITE)
+        searchText.setHintTextColor(Color.WHITE)*/
         // Toolbar search listener
         searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -189,7 +185,7 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
                 // Places Autocomplete result
                 val result = Places.GeoDataApi.getAutocompletePredictions(
-                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 10000.0), filter)
+                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 1.0), filter)
                 result.setResultCallback {
                     it.forEach {
                         Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
@@ -205,17 +201,34 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                                 // Map marker
                                 val marker = MarkerOptions()
                                 marker.position(place.latLng)
+                                marker.title(place.name.toString())
+                                marker.snippet(place.address.toString())
+                                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
                                 mMap.addMarker(marker)
+
+                                mColRef.addSnapshotListener { colSnapshot, p1 ->
+                                    if(colSnapshot.documents.isNotEmpty()){
+                                        val res = ArrayList<Workmate>()
+                                        for(doc in colSnapshot.documents){
+                                            if(doc.get("restaurantId") == place.id){
+                                                res.add(doc.toObject(Workmate::class.java))
+                                            }
+                                        }
+                                        if(res.count() > 0){
+                                            marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_green))
+                                        }
+                                    }
+                                }
 
                                 // Get photo
                                 Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
                                     if(it.photoMetadata != null && it.photoMetadata.count > 0) {
                                         it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                            val res = Restaurant(place, distance[0], it.bitmap)
-                                            mListFragment.addRestaurant(res)
+                                            mListFragment.addRestaurant(Restaurant(place, distance[0], it.bitmap))
                                         }
                                     }
                                 }
+
                             }
                         }
                     }
@@ -315,9 +328,8 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
     /** On Google Map ready */
     override fun onMapReady(p0: GoogleMap?) {
+        // Initialize map object
         mMap = p0!!
-        mMap.uiSettings.isMyLocationButtonEnabled = true
-        //gMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style))
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
@@ -325,6 +337,31 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         // Get the current location of the device and set the position of the map.
         getDeviceLocation()
 
+        // Check for permission and enables user location to be pointed at
+        if ((ContextCompat.checkSelfPermission(this.applicationContext,
+                        android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            mMap.isMyLocationEnabled = true
+        }
+
+        // Location button
+        mMap.uiSettings.isMyLocationButtonEnabled = true
+
+        // Zoom buttons
+        mMap.uiSettings.isZoomControlsEnabled = true
+
+        // Compass button
+        mMap.uiSettings.isCompassEnabled = true
+
+        // Marker window click listener
+        mMap.setOnInfoWindowClickListener { marker ->
+            val res = mListFragment.getList().firstOrNull {
+                it.name == marker.title
+            }
+            if(res != null){
+                displayRestaurant(res.id)
+            }
+            true
+        }
     }
 
     /** Get permission to access device location */

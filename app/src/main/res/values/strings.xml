@@ -49,4 +49,6 @@
     <string name="error_occurred">An error occurred.</string>
     <string name="list_placeholder">Use the search bar to find restaurants</string>
     <string name="im_hungry">I\'m hungry !</string>
+    <string name="no_workmate">No workmate selected this restaurant at the moment.</string>
+    <string name="unselect_success">The restaurant has been successfully unselected</string>
 </resources>

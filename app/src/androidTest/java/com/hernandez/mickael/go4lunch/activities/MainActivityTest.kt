@@ -8,6 +8,7 @@ import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.R.id.navigation_list
+import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import org.junit.After
 
 import org.junit.Test
@@ -55,5 +56,6 @@ class MainActivityTest {
     @Test
     fun changeNavigationTab(){
         mActivity.findViewById<BottomNavigationView>(R.id.navigation).selectedItemId = navigation_list
+        assert(mActivity.findViewById<BottomNavigationView>(R.id.navigation).selectedItemId == navigation_list)
     }
 }

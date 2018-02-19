@@ -61,6 +61,10 @@ class ListFragment : Fragment() {
             mAdapter.notifyDataSetChanged()
         }
     }
+
+    fun getList(): ArrayList<Restaurant>{
+        return placesList
+    }
     fun addRestaurant(place: Restaurant){
         placesList.add(place)
         mAdapter.notifyDataSetChanged()
