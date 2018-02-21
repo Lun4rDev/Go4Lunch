@@ -31,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.internal.IGoogleMapDelegate
 import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -46,7 +47,11 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.io.ByteArrayOutputStream
 
 
-open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+open class MainActivity : AppCompatActivity(),
+        NavigationView.OnNavigationItemSelectedListener,
+        OnMapReadyCallback,
+        GoogleApiClient.OnConnectionFailedListener,
+        SearchView.OnQueryTextListener {
     /** Sign-in intent code */
     val RC_SIGN_IN = 123
 
@@ -87,13 +92,15 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
-    private lateinit var mLastKnownLocation: Location
+    private var mLastKnownLocation = Location("")
 
     private val DEFAULT_ZOOM = 16f
 
     private lateinit var mDefaultLocation: LatLng
 
     private val mListFragment = ListFragment()
+
+    private val mWorkmatesList = ArrayList<Workmate>()
 
     private val mWorkmatesFragment = WorkmatesFragment()
 
@@ -149,12 +156,17 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
         nav_view.setNavigationItemSelectedListener(this)
 
-        // Bottom navigation view
+        // Retain map fragment instance
+        mMapFragment.retainInstance = true
+
+        // Bottom bar navigation adapter
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
+
         // Adding the 3 fragments
         pagerAdapter.addFragments(mMapFragment)
         pagerAdapter.addFragments(mListFragment)
         pagerAdapter.addFragments(mWorkmatesFragment)
+
         // Setting the adapter
         viewPager.adapter = pagerAdapter
         viewPager.setPagingEnabled(false)
@@ -177,71 +189,7 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         searchText.setTextColor(Color.WHITE)
         searchText.setHintTextColor(Color.WHITE)*/
         // Toolbar search listener
-        searchView.setOnQueryTextListener (object: SearchView.OnQueryTextListener{
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                mListFragment.resetList()
-                // Restaurants filter
-                val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
-
-                // Places Autocomplete result
-                val result = Places.GeoDataApi.getAutocompletePredictions(
-                        mGoogleApiClient, query, toBounds(mLastKnownLocation, 1.0), filter)
-                result.setResultCallback {
-                    it.forEach {
-                        Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
-                            if(it.count > 0){
-                                // Restaurant object init
-                                val place = it[0]
-                                // Distance between last location and restaurant
-                                val distance = floatArrayOf(0f)
-                                Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
-                                        mLastKnownLocation.latitude, mLastKnownLocation.longitude,
-                                        distance)
-
-                                // Map marker
-                                val marker = MarkerOptions()
-                                marker.position(place.latLng)
-                                marker.title(place.name.toString())
-                                marker.snippet(place.address.toString())
-                                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                                mMap.addMarker(marker)
-
-                                mColRef.addSnapshotListener { colSnapshot, p1 ->
-                                    if(colSnapshot.documents.isNotEmpty()){
-                                        val res = ArrayList<Workmate>()
-                                        for(doc in colSnapshot.documents){
-                                            if(doc.get("restaurantId") == place.id){
-                                                res.add(doc.toObject(Workmate::class.java))
-                                            }
-                                        }
-                                        if(res.count() > 0){
-                                            marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_green))
-                                        }
-                                    }
-                                }
-
-                                // Get photo
-                                Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
-                                    if(it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                        it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                            mListFragment.addRestaurant(Restaurant(place, distance[0], it.bitmap))
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-                    it.release()
-                }
-                return false
-            }
-
-            override fun onQueryTextChange(p0: String?): Boolean {
-                return false
-            }
-
-        })
+        searchView.setOnQueryTextListener(this)
 
         /*val autocompleteFragment = PlaceAutocompleteFragment()
         //supportFragmentManager.findFragmentById(R.id.place_autocomplete_fragment)
@@ -259,22 +207,26 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
-        nav_view.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
-        nav_view.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
+        var navView = findViewById<NavigationView>(R.id.nav_view)
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
         Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
+
+        // Firestore user document
         mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+
+        // Populating workmates list with Firestore data
         mColRef.addSnapshotListener { colSnapshot, p1 ->
-            if(colSnapshot.documents.isNotEmpty()){
-                val res = ArrayList<Workmate>()
+            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
+                mWorkmatesList.clear()
                 for(doc in colSnapshot.documents){
-                    if(doc != null && doc.exists()){
-                        res.add(doc.toObject(Workmate::class.java))
+                    if(doc.exists()){
+                        mWorkmatesList.add(doc.toObject(Workmate::class.java))
                     }
                 }
-                mWorkmatesFragment.setWorkmates(res)
+                mWorkmatesFragment.setWorkmates(mWorkmatesList)
             }
         }
-
     }
 
     /** Displays restaurant according to its id */
@@ -299,7 +251,7 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                     if(it.photoMetadata != null && it.photoMetadata.count > 0) {
                         it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
                             val intent = Intent(applicationContext, RestaurantActivity::class.java)
-                            intent.putExtra("Restaurant", Restaurant(place, distance[0], it.bitmap))
+                            intent.putExtra("Restaurant", Restaurant(place, arrayListOf(), distance[0], it.bitmap))
                             val bStream = ByteArrayOutputStream()
                             it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
                             val byteArray = bStream.toByteArray()
@@ -440,7 +392,6 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         return LatLngBounds(southwestCorner, northeastCorner)
     }
 
-
     /** Handles click on a navigation drawer item */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
@@ -467,6 +418,7 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         return true
     }
 
+
     /** Prevents user from going back to ConnectionActivity */
     override fun onBackPressed() {
         if(drawer_layout.isDrawerOpen(GravityCompat.START)){
@@ -477,6 +429,70 @@ open class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     /** On Google API connection failed */
     override fun onConnectionFailed(p0: ConnectionResult) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    /** When the user submit a search query */
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        mListFragment.resetList()
+        // Restaurants filter
+        val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
+
+        // Places Autocomplete result
+        val result = Places.GeoDataApi.getAutocompletePredictions(
+                mGoogleApiClient, query, toBounds(mLastKnownLocation, 1.0), filter)
+        result.setResultCallback {
+            it.forEach {
+                Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
+                    if(it.count > 0){
+                        // Restaurant object init
+                        val place = it[0]
+                        // Distance between last location and restaurant
+                        val distance = floatArrayOf(0f)
+                        Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
+                                mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                                distance)
+
+                        // Map marker
+                        val marker = MarkerOptions()
+                        marker.position(place.latLng)
+                        marker.title(place.name.toString())
+                        marker.snippet(place.address.toString())
+                        marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
+                        mMap.addMarker(marker)
+
+                        val mates = ArrayList<Workmate>()
+                        mColRef.addSnapshotListener { colSnapshot, p1 ->
+                            if(colSnapshot.documents.isNotEmpty()){
+                                for(doc in colSnapshot.documents){
+                                    if(doc.get("restaurantId") == place.id){
+                                        mates.add(doc.toObject(Workmate::class.java))
+                                    }
+                                }
+                                if(mates.count() > 0){
+                                    marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_green))
+                                }
+                            }
+                        }
+
+                        // Get photo
+                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
+                            if(it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                    mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap))
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+            it.release()
+        }
+        return false
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        return false
     }
 
 }

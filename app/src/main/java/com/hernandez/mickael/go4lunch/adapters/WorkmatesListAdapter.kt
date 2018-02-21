@@ -20,6 +20,8 @@ import kotlinx.android.synthetic.main.row_workmate.view.*
 /**
  * Created by Mickael Hernandez on 08/02/2018.
  */
+
+/** Custom adapter for the workmates RecyclerView */
 open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList<Workmate>) : RecyclerView.Adapter<WorkmatesListAdapter.ViewHolder>() {
     private var mContext = context
     private var mResource = resource
@@ -40,7 +42,7 @@ open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList
         val item = mList[position]
 
         // If this workmate hasn't picked a restaurant yet
-        if(item.restaurantId == null){
+        if(item.restaurantId == null || item.restaurantId == ""){
             holder.textView.text = mContext.getString(R.string.text_notdecided, item.displayName)
             holder.textView.setTypeface(null, Typeface.ITALIC)
 

@@ -73,7 +73,7 @@ class RestaurantActivity : AppCompatActivity() {
 
         // Getting workmates joining this restaurant from Firestore
         mColRef.addSnapshotListener { colSnapshot, p1 ->
-            if(colSnapshot.documents.isNotEmpty()){
+            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                 val res = ArrayList<Workmate>()
                 for(doc in colSnapshot.documents){
                     // If this restaurant and the document restaurant corresponds

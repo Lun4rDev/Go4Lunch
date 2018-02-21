@@ -6,9 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
+import kotlin.math.roundToInt
 
 
 /**
@@ -16,7 +18,7 @@ import com.hernandez.mickael.go4lunch.model.Restaurant
  */
 open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayList<Restaurant>) : ArrayAdapter<Restaurant>(context, resource, list) {
     override fun getView(position: Int, originalView: View?, container: ViewGroup?): View {
-        val convertView : View = originalView ?: LayoutInflater.from(context).inflate(R.layout.row_place, container, false)
+        val convertView : View = originalView ?: LayoutInflater.from(context).inflate(R.layout.row_restaurant, container, false)
         val item = getItem(position)
 
         // Name
@@ -28,12 +30,25 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
         // Opening time
         //convertView.findViewById<TextView>(R.id.place_open).text = item.phoneNumber
 
-        // Image
-        convertView.findViewById<ImageView>(R.id.place_image).setImageBitmap(item.img)
+        // Workmates number
+        convertView.findViewById<TextView>(R.id.place_mates).text = "(" + item.workmates.size + ")"
+        // Rating
+        /*for(i in 1..item.rating.toInt()){
+            if(i <= 5){
+                val img = ImageView(context)
+                img.setImageResource(R.drawable.ic_star_rate_black)
+                convertView.findViewById<LinearLayout>(R.id.place_rating).addView(img)
+            }
+        }*/
+        // Rating
+        convertView.findViewById<TextView>(R.id.place_rating).text = item.rating.toString() + "/5"
 
         // Distance
-        val dStr = item.distance.toString() + "m"
+        val dStr = item.distance.roundToInt().toString() + "m"
         convertView.findViewById<TextView>(R.id.place_distance).text = dStr
+
+        // Image
+        convertView.findViewById<ImageView>(R.id.place_image).setImageBitmap(item.img)
 
         return convertView
     }

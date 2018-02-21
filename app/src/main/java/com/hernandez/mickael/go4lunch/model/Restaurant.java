@@ -6,6 +6,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlacePhotoResult;
+
+import java.util.ArrayList;
+
 import kotlinx.android.parcel.Parceler;
 import kotlinx.android.parcel.Parcelize;
 
@@ -43,8 +46,10 @@ public class Restaurant implements Parcelable {
     // Distance
     public Float distance;
 
+    public ArrayList workmates;
 
-    public Restaurant(Place place, Float pDistance, Bitmap pImg){
+
+    public Restaurant(Place place, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg){
         id = place.getId();
         name = place.getName();
         type = place.getPlaceTypes().get(0);
@@ -52,6 +57,7 @@ public class Restaurant implements Parcelable {
         rating = place.getRating();
         phone = place.getPhoneNumber();
         if(place.getWebsiteUri() != null){website = place.getWebsiteUri().toString();}
+        workmates = pWorkmates;
         distance = pDistance;
         img = pImg;
     }
@@ -64,6 +70,7 @@ public class Restaurant implements Parcelable {
         rating = in.readFloat();
         phone= in.readString();
         website = in.readString();
+        workmates = in.readArrayList(Workmate.class.getClassLoader());
         distance = in.readFloat();
         //img = in.readParcelable(PlacePhotoResult.class.getClassLoader());
     }
@@ -82,6 +89,7 @@ public class Restaurant implements Parcelable {
         dest.writeFloat(rating);
         dest.writeString(phone.toString());
         dest.writeString(website);
+        dest.writeList(workmates);
         dest.writeFloat(distance);
         //dest.writeParcelable(img, 0);
     }

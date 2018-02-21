@@ -2,7 +2,6 @@ package com.hernandez.mickael.go4lunch.fragments
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.opengl.Visibility
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -14,7 +13,6 @@ import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.activities.RestaurantActivity
 import com.hernandez.mickael.go4lunch.adapters.RestaurantListAdapter
-import kotlinx.android.synthetic.main.fragment_list.*
 import java.io.ByteArrayOutputStream
 
 
@@ -31,18 +29,24 @@ class ListFragment : Fragment() {
 
     private lateinit var mPlaceholder : TextView
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        retainInstance = true
+        mAdapter = RestaurantListAdapter(context!!, R.layout.row_restaurant, placesList)
+    }
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val convertView = inflater.inflate(R.layout.fragment_list, container, false)
+        return inflater.inflate(R.layout.fragment_list, container, false)
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         // Setting up adapter with arrayList
-        mAdapter = RestaurantListAdapter(context!!, R.layout.row_place, placesList)
-        
-        val listView = convertView.findViewById<ListView>(R.id.places_list)
+        val listView = view.findViewById<ListView>(R.id.places_list)
         listView.adapter = mAdapter
-        listView.emptyView = convertView.findViewById(R.id.list_empty)
+        listView.emptyView = view.findViewById(R.id.list_empty)
 
         // Item click listener
-        listView.setOnItemClickListener { adapterView, view, i, l ->
+        listView.setOnItemClickListener { _, _, i, _ ->
             val intent = Intent(context, RestaurantActivity::class.java)
             intent.putExtra("Restaurant", placesList[i])
             val bStream = ByteArrayOutputStream()
@@ -51,15 +55,13 @@ class ListFragment : Fragment() {
             intent.putExtra("Image", byteArray)
             startActivity(intent)
         }
-
-        return convertView
     }
 
     fun resetList(){
         placesList.clear()
-        if(!mAdapter.isEmpty){
+        /*if(!mAdapter.isEmpty){
             mAdapter.notifyDataSetChanged()
-        }
+        }*/
     }
 
     fun getList(): ArrayList<Restaurant>{

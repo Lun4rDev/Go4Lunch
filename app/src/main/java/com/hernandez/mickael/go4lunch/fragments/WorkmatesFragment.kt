@@ -56,6 +56,7 @@ class WorkmatesFragment : Fragment() {
             // restoId = it.tag
             (activity as MainActivity).displayRestaurant(it.tag.toString())
         }
+        retainInstance = true
         return convertView
     }
 
