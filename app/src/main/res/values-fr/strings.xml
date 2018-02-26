@@ -27,6 +27,8 @@
     <string name="error_occurred">Une erreur est survenue.</string>
     <string name="list_placeholder">Utilisez la barre de recherche pour trouver des restaurants</string>
     <string name="im_hungry">I\'m hungry !</string>
-    <string name="no_workmate">No workmate selected this restaurant at the moment.</string>
-    <string name="unselect_success">The restaurant has been successfully unselected</string>
+    <string name="no_workmate">Aucun collègue n\'a sélectionné ce restaurant pour l\'instant.</string>
+    <string name="unselect_success">Le restaurant a été déselectionné avec succès.</string>
+    <string name="notification_text">Vous mangez à %1$s avec %2$d collègues.</string>
+    <string name="no_restaurant_selected">You didn\'t select any restaurant for today.</string>
 </resources>

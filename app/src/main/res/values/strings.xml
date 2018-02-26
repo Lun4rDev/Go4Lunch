@@ -51,4 +51,7 @@
     <string name="im_hungry">I\'m hungry !</string>
     <string name="no_workmate">No workmate selected this restaurant at the moment.</string>
     <string name="unselect_success">The restaurant has been successfully unselected</string>
+    <string name="notifications">Notifications</string>
+    <string name="notification_text">You\'re eating at %1$s with %2$d workmates</string>
+    <string name="no_restaurant_selected">You didn\'t select any restaurant for today.</string>
 </resources>

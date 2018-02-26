@@ -35,7 +35,9 @@ dependencies {
     // Firebase
     implementation 'com.google.firebase:firebase-auth:11.8.0'
     implementation 'com.google.firebase:firebase-firestore:11.8.0'
-    //implementation 'com.firebaseui:firebase-ui-auth:3.2.1'
+    implementation 'com.google.firebase:firebase-core:11.8.0'
+    implementation 'com.google.firebase:firebase-messaging:11.8.0'
+
 
     // Google Play Services
     implementation 'com.google.android.gms:play-services-maps:11.8.0'

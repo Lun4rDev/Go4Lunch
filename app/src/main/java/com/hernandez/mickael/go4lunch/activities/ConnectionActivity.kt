@@ -39,6 +39,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     val RC_GOOGLE = 123
     val RC_FACEBOOK = 64206
+
     /** Firebase auth instance */
     private var mAuth = FirebaseAuth.getInstance()
 
@@ -54,8 +55,8 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         super.onCreate(savedInstanceState)
         // Inflates the layout
         setContentView(R.layout.activity_connection)
-
-        if(FirebaseAuth.getInstance().currentUser != null){
+        mAuth = FirebaseAuth.getInstance()
+        if(mAuth.currentUser != null){
             startMainActivity()
         }
 
@@ -75,17 +76,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
-        // Recovering Facebook account
-        val fbToken = AccessToken.getCurrentAccessToken()
-        if(fbToken != null){
-            signInFacebook(fbToken)
-        }
-
-        // Recovering Google account
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        if(account != null){
-            signInGoogle(account.idToken.toString())
-        }
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -112,7 +102,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 //Log.d(FragmentActivity.TAG, "facebook:onSuccess:" + loginResult)
                 signInFacebook(loginResult.accessToken)
             }
-
             override fun onCancel() {
                 Log.d(TAG, "facebook:onCancel")
                 // ...
@@ -122,6 +111,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 Log.d(TAG, "facebook:onError", error)
                 // ...
             }
+
         })
 
         // Twitter sign-in button
@@ -130,11 +120,11 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 Log.d(TAG, "twitterLogin:success" + result)
                 signInTwitter(result.data)
             }
-
             override fun failure(exception: TwitterException) {
                 Log.w(TAG, "twitterLogin:failure", exception)
                 //updateUI(null)
             }
+
         }
 
         //GitHub sign-in button
@@ -159,6 +149,18 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             val newFragment = EmailDialogFragment()
             newFragment.show(supportFragmentManager, "missiles")
 
+        }
+
+        // Recovering Facebook account
+        val fbToken = AccessToken.getCurrentAccessToken()
+        if(fbToken != null){
+            signInFacebook(fbToken)
+        }
+
+        // Recovering Google account
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if(account != null){
+            signInGoogle(account.idToken.toString())
         }
     }
 

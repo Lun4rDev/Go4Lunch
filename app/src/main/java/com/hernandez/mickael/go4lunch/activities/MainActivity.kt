@@ -96,7 +96,7 @@ open class MainActivity : AppCompatActivity(),
 
     private val DEFAULT_ZOOM = 16f
 
-    private lateinit var mDefaultLocation: LatLng
+    private var mDefaultLocation = LatLng(.0, .0)
 
     private val mListFragment = ListFragment()
 
@@ -208,8 +208,8 @@ open class MainActivity : AppCompatActivity(),
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
         var navView = findViewById<NavigationView>(R.id.nav_view)
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser!!.displayName
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser!!.email
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
         Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
 
         // Firestore user document
@@ -364,7 +364,7 @@ open class MainActivity : AppCompatActivity(),
             {
                 val locationResult = mFusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
+                    if (task.isSuccessful && task.result != null) {
                         // Set the map's camera position to the current location of the device.
                         mLastKnownLocation = task.result
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
@@ -402,15 +402,19 @@ open class MainActivity : AppCompatActivity(),
                         if(it.result.exists() && id != "") {
                             displayRestaurant(id)
                         } else {
-                            Toast.makeText(applicationContext, "You didn\'t select any restaurant.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            R.id.item_settings -> {}
+            R.id.item_settings -> {
+                // Start parameters activity
+                startActivity(Intent(applicationContext, ParametersActivity::class.java))
+            }
             R.id.item_logout -> {
+                // Go back to connection activity
                 finish()
             }
         }
