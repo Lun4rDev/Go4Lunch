@@ -9,9 +9,17 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.support.v4.app.NotificationCompat
 import android.support.v7.app.AppCompatActivity
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.inputmethod.EditorInfo
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.receivers.AlarmReceiver
 import kotlinx.android.synthetic.main.activity_parameters.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.*
+import android.widget.EditText
+import android.widget.TextView
 
 /**
  * Created by Mickael Hernandez on 22/02/2018.
@@ -24,6 +32,14 @@ class ParametersActivity : AppCompatActivity() {
     lateinit var mAlarm : AlarmManager
 
     private lateinit var notifIntent: PendingIntent
+
+    private lateinit var editName : EditText
+
+    // Fill UI with Firebase user data
+    private var mUser = FirebaseAuth.getInstance().currentUser
+
+    // Firestore user document
+    private var mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +67,19 @@ class ParametersActivity : AppCompatActivity() {
             }
             mSharedPrefs.edit().putBoolean(KEY_SWITCH, switch_notifications.isChecked).apply()
         }
+
+        editName = findViewById(R.id.edit_name)
+        mDocRef.addSnapshotListener { snapshot, firestoreException ->
+            if(snapshot.exists()){
+                editName.setText(snapshot.getString("displayName"), TextView.BufferType.EDITABLE)
+            }
+        }
+    }
+
+    override fun onPause() {
+        // updates username in database
+        mDocRef.update("displayName", editName.text.toString())
+        super.onPause()
     }
 
     private fun setRecurringAlarm(context: Context) {

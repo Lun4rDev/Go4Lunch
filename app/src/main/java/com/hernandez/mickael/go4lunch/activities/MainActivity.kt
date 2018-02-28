@@ -41,6 +41,7 @@ import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
+import com.hernandez.mickael.go4lunch.fragments.RetainMapFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.activity_main.*
@@ -77,7 +78,7 @@ open class MainActivity : AppCompatActivity(),
     private lateinit var pagerAdapter : BottomBarAdapter
 
     /** Map fragment */
-    private var mMapFragment = SupportMapFragment()
+    private var mMapFragment = RetainMapFragment()
 
     /** Google Map object */
     private lateinit var mMap : GoogleMap
@@ -157,7 +158,7 @@ open class MainActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         // Retain map fragment instance
-        mMapFragment.retainInstance = true
+        //mMapFragment.retainInstance = true
 
         // Bottom bar navigation adapter
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
@@ -267,21 +268,28 @@ open class MainActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         updateFirestoreData()
+        if(!::mMap.isInitialized){
+            mMapFragment.getMapAsync(this)
+        }
     }
 
     /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
-        val hMap = HashMap<String, Any>()
-        hMap["uid"] = mUser!!.uid
-        hMap["displayName"] = mUser!!.displayName.toString()
-        hMap["photoUrl"] = mUser!!.photoUrl.toString()
-        mDocRef.update(hMap)
+        mDocRef.addSnapshotListener { snapshot, firestoreException ->
+            if(snapshot.exists()){
+                val hMap = HashMap<String, Any>()
+                if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
+                if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
+                if(!snapshot.contains("photoUrl")) hMap["photoUrl"] = mUser!!.photoUrl.toString()
+                mDocRef.update(hMap)
+            }
+        }
     }
 
     /** On Google Map ready */
-    override fun onMapReady(p0: GoogleMap?) {
+    override fun onMapReady(pMap: GoogleMap?) {
         // Initialize map object
-        mMap = p0!!
+        mMap = pMap!!
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI()
