@@ -25,6 +25,8 @@ class ListFragment : Fragment() {
 
     private var placesList = ArrayList<Restaurant>()
 
+    private lateinit var listView: ListView
+
     private lateinit var mAdapter : RestaurantListAdapter
 
     private lateinit var mPlaceholder : TextView
@@ -34,6 +36,13 @@ class ListFragment : Fragment() {
         retainInstance = true
         mAdapter = RestaurantListAdapter(context!!, R.layout.row_restaurant, placesList)
     }
+
+    override fun onResume() {
+        super.onResume()
+        if(!::mAdapter.isInitialized){
+            mAdapter = RestaurantListAdapter(context!!, R.layout.row_restaurant, placesList)
+        }
+    }
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_list, container, false)
     }
@@ -41,7 +50,7 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Setting up adapter with arrayList
-        val listView = view.findViewById<ListView>(R.id.places_list)
+        listView = view.findViewById<ListView>(R.id.places_list)
         listView.adapter = mAdapter
         listView.emptyView = view.findViewById(R.id.list_empty)
 
@@ -59,6 +68,7 @@ class ListFragment : Fragment() {
 
     fun resetList(){
         placesList.clear()
+        mAdapter.notifyDataSetChanged()
         /*if(!mAdapter.isEmpty){
             mAdapter.notifyDataSetChanged()
         }*/
@@ -67,6 +77,7 @@ class ListFragment : Fragment() {
     fun getList(): ArrayList<Restaurant>{
         return placesList
     }
+
     fun addRestaurant(place: Restaurant){
         placesList.add(place)
         mAdapter.notifyDataSetChanged()

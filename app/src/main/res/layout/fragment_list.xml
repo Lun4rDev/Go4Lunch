@@ -3,17 +3,18 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/list_empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="@string/list_placeholder"/>
+        android:text="@string/list_placeholder"
+        />
 
     <ListView
         android:id="@+id/places_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

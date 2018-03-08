@@ -288,6 +288,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             RC_LOGOUT -> {
                 mGoogleSignInClient.signOut()
                 FirebaseAuth.getInstance().signOut()
+                FacebookSdk.clearLoggingBehaviors()
             }
             RC_GOOGLE -> {
                 if (resultCode == RESULT_OK) {

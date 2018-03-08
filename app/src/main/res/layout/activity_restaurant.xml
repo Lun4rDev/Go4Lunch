@@ -89,14 +89,14 @@
                     android:text="@string/action_call"
                     android:drawableTop="@drawable/ic_call_black"
                     style="@style/Widget.AppCompat.Button.Borderless" />
-                <Button
+                <!--<Button
                     android:id="@+id/button_like"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/action_like"
                     android:drawableTop="@drawable/ic_star_rate_black"
-                    style="@style/Widget.AppCompat.Button.Borderless"/>
+                    style="@style/Widget.AppCompat.Button.Borderless"/>-->
                 <Button
                     android:id="@+id/button_website"
                     android:layout_width="0dp"

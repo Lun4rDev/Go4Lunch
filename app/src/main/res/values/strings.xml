@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Go4Lunch</string>
+    <string name="app_name" translatable="false">Go4Lunch</string>
 
     <string name="places_api_key" translatable="false">AIzaSyCLx5WO9P9hWujgs4CiEEmywSzWX7x97hM</string>
 

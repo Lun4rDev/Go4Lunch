@@ -1,5 +1,6 @@
 package com.hernandez.mickael.go4lunch.activities
 
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -8,16 +9,16 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.MenuItem
-import android.widget.EditText
+import android.view.View
 import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
@@ -26,23 +27,26 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.places.*
+import com.google.android.gms.location.places.AutocompleteFilter
+import com.google.android.gms.location.places.GeoDataClient
+import com.google.android.gms.location.places.PlaceDetectionClient
+import com.google.android.gms.location.places.Places
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.internal.IGoogleMapDelegate
 import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.*
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.RetainMapFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
+import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.ByteArrayOutputStream
@@ -78,7 +82,8 @@ open class MainActivity : AppCompatActivity(),
     private lateinit var pagerAdapter : BottomBarAdapter
 
     /** Map fragment */
-    private var mMapFragment = RetainMapFragment()
+    private var mMapFragment = SupportMapFragment()
+    //private lateinit var mMapFragment: SupportMapFragment
 
     /** Google Map object */
     private lateinit var mMap : GoogleMap
@@ -110,6 +115,7 @@ open class MainActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        viewPager.offscreenPageLimit = 3
         // Shared Preferences
         mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
 
@@ -122,6 +128,7 @@ open class MainActivity : AppCompatActivity(),
                 .build()
         mGoogleApiClient.connect()
 
+        //mMapFragment = map as SupportMapFragment
         mMapFragment.getMapAsync(this)
 
         // Construct a GeoDataClient.
@@ -158,7 +165,7 @@ open class MainActivity : AppCompatActivity(),
         nav_view.setNavigationItemSelectedListener(this)
 
         // Retain map fragment instance
-        //mMapFragment.retainInstance = true
+        mMapFragment.retainInstance = true
 
         // Bottom bar navigation adapter
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
@@ -192,20 +199,6 @@ open class MainActivity : AppCompatActivity(),
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
 
-        /*val autocompleteFragment = PlaceAutocompleteFragment()
-        //supportFragmentManager.findFragmentById(R.id.place_autocomplete_fragment)
-
-        val listener = object : PlaceSelectionListener {
-            override fun onPlaceSelected(p0: Place?) {
-
-            }
-
-            override fun onError(p0: Status?) {
-            }
-
-        }
-        autocompleteFragment.setOnPlaceSelectedListener(listener)*/
-
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
         var navView = findViewById<NavigationView>(R.id.nav_view)
@@ -236,16 +229,12 @@ open class MainActivity : AppCompatActivity(),
             if(it.count > 0){
                 // Restaurant object init
                 val place = it[0]
+
                 // Distance between last location and restaurant
                 val distance = floatArrayOf(0f)
                 Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
                         mLastKnownLocation.latitude, mLastKnownLocation.longitude,
                         distance)
-
-                // Map marker
-                val marker = MarkerOptions()
-                marker.position(place.latLng)
-                mMap.addMarker(marker)
 
                 // Get photo
                 Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
@@ -267,10 +256,8 @@ open class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
+        mMapFragment.getMapAsync(this)
         updateFirestoreData()
-        if(!::mMap.isInitialized){
-            mMapFragment.getMapAsync(this)
-        }
     }
 
     /** Sends Firebase user data to the Firestore database */
@@ -301,6 +288,13 @@ open class MainActivity : AppCompatActivity(),
         if ((ContextCompat.checkSelfPermission(this.applicationContext,
                         android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             mMap.isMyLocationEnabled = true
+        }
+
+        if(markerBuffer.size > 0){
+            for (m in markerBuffer){
+                mMap.addMarker(m)
+            }
+            markerBuffer.clear()
         }
 
         // Location button
@@ -443,9 +437,17 @@ open class MainActivity : AppCompatActivity(),
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    /** When the user submit a search query */
-    override fun onQueryTextSubmit(query: String?): Boolean {
+    private var markerBuffer = ArrayList<MarkerOptions>()
+
+    /** Use Google Places API to find nearby restaurants according to the query string */
+    private fun searchRestaurants(query: String?){
+        // Shows the loading animation
+
+        loading_view.visibility = View.VISIBLE
+        // Removes all rows in list
         mListFragment.resetList()
+        // Removes all markers on map
+        mMap.clear()
         // Restaurants filter
         val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
 
@@ -470,7 +472,11 @@ open class MainActivity : AppCompatActivity(),
                         marker.title(place.name.toString())
                         marker.snippet(place.address.toString())
                         marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                        mMap.addMarker(marker)
+                        if(::mMap.isInitialized){
+                            mMap.addMarker(marker)
+                        } else {
+                            markerBuffer.add(marker)
+                        }
 
                         val mates = ArrayList<Workmate>()
                         mColRef.addSnapshotListener { colSnapshot, p1 ->
@@ -485,12 +491,14 @@ open class MainActivity : AppCompatActivity(),
                                 }
                             }
                         }
-
                         // Get photo
                         Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
                             if(it.photoMetadata != null && it.photoMetadata.count > 0) {
                                 it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
                                     mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap))
+                                    if(loading_view.visibility == View.VISIBLE){
+                                        loading_view.visibility = View.GONE
+                                    }
                                 }
                             }
                         }
@@ -500,6 +508,11 @@ open class MainActivity : AppCompatActivity(),
             }
             it.release()
         }
+    }
+
+    /** When the user submit a search query */
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        searchRestaurants(query)
         return false
     }
 
