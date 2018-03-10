@@ -34,7 +34,7 @@
                 app:srcCompat="@drawable/com_facebook_button_icon_blue"/>
 
             <!--android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
+                android:id="@toolbar_mainlbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"

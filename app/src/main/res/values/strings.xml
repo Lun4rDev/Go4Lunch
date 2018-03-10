@@ -1,7 +1,11 @@
 <resources>
+    <!-- Global strings -->
     <string name="app_name" translatable="false">Go4Lunch</string>
+    <string name="error_occurred">An error occurred.</string>
 
+    <!-- Google strings -->
     <string name="places_api_key" translatable="false">AIzaSyCLx5WO9P9hWujgs4CiEEmywSzWX7x97hM</string>
+    <string name="google_web_client_id" translatable="false">85975384709–1p2rka40di3v2q26i7mfj3q67dn6226c.apps.googleusercontent.com</string>
 
     <!-- Facebook consumer key and secret -->
     <string name="facebook_application_id" translatable="false">1167955320007971</string>
@@ -16,6 +20,26 @@
     <string name="github_secret" translatable="false">933749e3f89c49317d3dbb7b79be2fba43350394</string>
     <string name="github_app_url" translatable="false">go4lunch://github</string>
 
+
+    <!-- Connection strings -->
+    <string name="connection">Connection</string>
+    <string name="connectionfail">Connection failed</string>
+    <string name="email_and_password">Email and password</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="signin">Sign in</string>
+    <string name="cancel">Cancel</string>
+    <string name="email_signin_fail">Failed to sign in and to sign up. Did you enter a valid e-mail address ?</string>
+    <string name="disconnected">You have been successfully disconnected.</string>
+
+    <!-- MainActivity strings -->
+    <string name="list_placeholder">Use the search bar to find restaurants</string>
+    <string name="no_workmate">No workmate selected this restaurant at the moment.</string>
+    <string name="unselect_success">The restaurant has been successfully unselected</string>
+    <string name="no_restaurant_selected">You didn\'t select any restaurant for today.</string>
+    <string name="restaurant_map">Restaurant map</string>
+    <string name="restaurant_list">Restaurant list</string>
+    
     <!-- View names -->
     <string name="map_view">Map View</string>
     <string name="list_view">List View</string>
@@ -27,31 +51,26 @@
     <string name="item_lunch">YOUR LUNCH</string>
     <string name="item_settings">SETTINGS</string>
     <string name="item_logout">LOGOUT</string>
-    <string name="connection">Connection</string>
-    <string name="disconnected">You have been successfully disconnected.</string>
-    <string name="connectionfail">Connection failed</string>
-    <string name="google_web_client_id" translatable="false">85975384709–1p2rka40di3v2q26i7mfj3q67dn6226c.apps.googleusercontent.com</string>
+
+    <!-- Restaurant strings -->
     <string name="action_call">Call</string>
     <string name="action_like">Like</string>
     <string name="action_website">Website</string>
-    <string name="email_and_password">Email and password</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
-    <string name="signin">Sign in</string>
-    <string name="cancel">Cancel</string>
-    <string name="email_signin_fail">Failed to sign in and to sign up. Did you enter a valid e-mail address ?</string>
     <string name="RESTAURANT_VALUES" translatable="false">RESTAURANT_VALUES</string>
     <string name="RESTAURANT_CHANGE" translatable="false">RESTAURANT_CHANGE</string>
     <string name="text_workmate">%1$s is eating at %2$s</string>
     <string name="text_workmate_joining">%1$s is joining !</string>
     <string name="text_notdecided">%1$s hasn\'t decided yet</string>
     <string name="select_success">The restaurant has been successfully selected.</string>
-    <string name="error_occurred">An error occurred.</string>
-    <string name="list_placeholder">Use the search bar to find restaurants</string>
-    <string name="im_hungry">I\'m hungry !</string>
-    <string name="no_workmate">No workmate selected this restaurant at the moment.</string>
-    <string name="unselect_success">The restaurant has been successfully unselected</string>
+
+
+    <!-- Notifications strings -->
     <string name="notifications">Notifications</string>
     <string name="notification_text">You\'re eating at %1$s with %2$d workmates</string>
-    <string name="no_restaurant_selected">You didn\'t select any restaurant for today.</string>
+
+    <!-- Parameters strings -->
+    <string name="apply_changes">Apply changes</string>
+    <string name="changes_success">Changes have been saved successfully.</string>
+    <string name="display_name">Name :</string>
+    <string name="picture_url">Picture URL :</string>
 </resources>

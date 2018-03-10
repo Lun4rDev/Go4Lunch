@@ -1,6 +1,5 @@
 package com.hernandez.mickael.go4lunch.activities
 
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -11,7 +10,6 @@ import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
-import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -44,7 +42,6 @@ import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
-import com.hernandez.mickael.go4lunch.fragments.RetainMapFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
@@ -128,8 +125,6 @@ open class MainActivity : AppCompatActivity(),
                 .build()
         mGoogleApiClient.connect()
 
-        //mMapFragment = map as SupportMapFragment
-        mMapFragment.getMapAsync(this)
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null)
@@ -147,12 +142,12 @@ open class MainActivity : AppCompatActivity(),
                 R.id.navigation_map -> {
                     //changeFragment(0)
                     viewPager.currentItem = 0
-                    toolbar.title = getString(R.string.im_hungry)
+                    toolbar.title = getString(R.string.restaurant_map)
                 }
                 R.id.navigation_list -> {
                     //changeFragment(1)
                     viewPager.currentItem = 1
-                    toolbar.title = getString(R.string.im_hungry)
+                    toolbar.title = getString(R.string.restaurant_list)
                 }
                 R.id.navigation_people -> {
                     //changeFragment(2)
@@ -162,7 +157,11 @@ open class MainActivity : AppCompatActivity(),
             }
             true
         }
+
         nav_view.setNavigationItemSelectedListener(this)
+
+        //mMapFragment = map as SupportMapFragment
+        mMapFragment.getMapAsync(this)
 
         // Retain map fragment instance
         mMapFragment.retainInstance = true
@@ -186,9 +185,9 @@ open class MainActivity : AppCompatActivity(),
         toggle.syncState()
 
         // Toolbar configuration
-        toolbar.inflateMenu(R.menu.toolbar)
+        toolbar.inflateMenu(R.menu.toolbar_main)
         toolbar.setTitleTextColor(Color.WHITE)
-        toolbar.setTitle(R.string.im_hungry)
+        toolbar.setTitle(R.string.restaurant_map)
 
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)

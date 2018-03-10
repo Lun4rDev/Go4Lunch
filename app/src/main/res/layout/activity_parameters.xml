@@ -37,7 +37,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Display name :"/>
+            android:text="@string/display_name"
+            android:labelFor="@id/edit_name"/>
         <EditText
             android:id="@+id/edit_name"
             android:layout_width="wrap_content"
@@ -48,12 +49,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Picture URL :"/>
+            android:text="@string/picture_url"
+            android:labelFor="@id/edit_imgurl"/>
         <EditText
             android:id="@+id/edit_imgurl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textPersonName"
+            android:inputType="textMultiLine"
             android:imeOptions="actionDone"/>
     </LinearLayout>
 </LinearLayout>

@@ -12,6 +12,8 @@ import android.support.v4.app.NotificationCompat
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
 import android.view.inputmethod.EditorInfo
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.receivers.AlarmReceiver
@@ -21,6 +23,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import com.google.firebase.auth.UserProfileChangeRequest
 
 /**
@@ -49,10 +52,16 @@ class ParametersActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_parameters)
         setSupportActionBar(findViewById(R.id.toolbar_params))
+
+        // allow backward navigation
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+
+        // hide the title
+        title = ""
 
         mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
 
+        // Resume switch state
         switch_notifications.isChecked = mSharedPrefs.getBoolean(KEY_SWITCH, false)
 
         // Get instance of AlarmManager
@@ -76,6 +85,7 @@ class ParametersActivity : AppCompatActivity() {
         editName = findViewById(R.id.edit_name)
         editImgUrl = findViewById(R.id.edit_imgurl)
 
+        // Database call
         mDocRef.addSnapshotListener { snapshot, firestoreException ->
             if(snapshot.exists()){
                 // Puts database values into the text inputs
@@ -85,16 +95,40 @@ class ParametersActivity : AppCompatActivity() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        // updates username in database
-        mDocRef.update("displayName", editName.text.toString())
-        mDocRef.update("photoUrl", editImgUrl.text.toString())
-        val profileUpdates = UserProfileChangeRequest.Builder()
-                .setDisplayName(editName.text.toString())
-                .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
-                .build()
-        mUser?.updateProfile(profileUpdates)
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.toolbar_parameters, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        // Handle item selection
+        return when (item?.itemId) {
+            // If the user wants to apply the changes
+            R.id.action_apply -> {
+                val name = editName.text.toString()
+                val imgUrl = editImgUrl.text.toString()
+                if(name != "" && imgUrl != ""){
+                    // updates username in database
+                    mDocRef.update("displayName", name)
+                    mDocRef.update("photoUrl", imgUrl)
+                    val profileUpdates = UserProfileChangeRequest.Builder()
+                            .setDisplayName(editName.text.toString())
+                            .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
+                            .build()
+                    mUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                        if(it.isSuccessful){
+                            Toast.makeText(applicationContext, getString(R.string.changes_success),Toast.LENGTH_SHORT).show()
+                            finish()
+                        } else {
+                            Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+
     }
 
     private fun setRecurringAlarm(context: Context) {
