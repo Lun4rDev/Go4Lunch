@@ -34,8 +34,12 @@ class WorkmatesFragment : Fragment() {
 
     private lateinit var mainActivity: MainActivity
 
+    /** Users Firestore collection reference */
+    var mColRef = FirebaseFirestore.getInstance().collection("users")
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        retainInstance = true
 
         // Inflate the layout for this fragment
         val convertView = inflater.inflate(R.layout.fragment_workmates, container, false)
@@ -57,15 +61,21 @@ class WorkmatesFragment : Fragment() {
             // restoId = it.tag
             (activity as MainActivity).displayRestaurant(it.tag.toString())
         }
-        retainInstance = true
-        return convertView
-    }
 
-    fun setWorkmates(list: ArrayList<Workmate>){
-        workmatesList = list
-        if(::mAdapter.isInitialized && context != null){
+        // Populating workmates list with Firestore data
+        mColRef.addSnapshotListener { colSnapshot, p1 ->
+            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
+                workmatesList.clear()
+                for(doc in colSnapshot.documents){
+                    if(doc.exists()){
+                        workmatesList.add(doc.toObject(Workmate::class.java))
+                    }
+                }
                 mAdapter.notifyDataSetChanged()
+            }
         }
+
+        return convertView
     }
 
     override fun onAttach(context: Context?) {

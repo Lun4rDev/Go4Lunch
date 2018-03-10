@@ -39,7 +39,7 @@
     <string name="no_restaurant_selected">You didn\'t select any restaurant for today.</string>
     <string name="restaurant_map">Restaurant map</string>
     <string name="restaurant_list">Restaurant list</string>
-    
+
     <!-- View names -->
     <string name="map_view">Map View</string>
     <string name="list_view">List View</string>

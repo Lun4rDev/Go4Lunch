@@ -103,7 +103,7 @@ open class MainActivity : AppCompatActivity(),
 
     private val mListFragment = ListFragment()
 
-    private val mWorkmatesList = ArrayList<Workmate>()
+    //private val mWorkmatesList = ArrayList<Workmate>()
 
     private val mWorkmatesFragment = WorkmatesFragment()
 
@@ -113,6 +113,7 @@ open class MainActivity : AppCompatActivity(),
         setContentView(R.layout.activity_main)
 
         viewPager.offscreenPageLimit = 3
+
         // Shared Preferences
         mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
 
@@ -207,19 +208,6 @@ open class MainActivity : AppCompatActivity(),
 
         // Firestore user document
         mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
-
-        // Populating workmates list with Firestore data
-        mColRef.addSnapshotListener { colSnapshot, p1 ->
-            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
-                mWorkmatesList.clear()
-                for(doc in colSnapshot.documents){
-                    if(doc.exists()){
-                        mWorkmatesList.add(doc.toObject(Workmate::class.java))
-                    }
-                }
-                mWorkmatesFragment.setWorkmates(mWorkmatesList)
-            }
-        }
     }
 
     /** Displays restaurant according to its id */
