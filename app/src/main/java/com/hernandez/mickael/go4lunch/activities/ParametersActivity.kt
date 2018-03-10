@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.support.v4.app.NotificationCompat
@@ -20,6 +21,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
 import android.widget.EditText
 import android.widget.TextView
+import com.google.firebase.auth.UserProfileChangeRequest
 
 /**
  * Created by Mickael Hernandez on 22/02/2018.
@@ -34,6 +36,8 @@ class ParametersActivity : AppCompatActivity() {
     private lateinit var notifIntent: PendingIntent
 
     private lateinit var editName : EditText
+
+    private lateinit var editImgUrl : EditText
 
     // Fill UI with Firebase user data
     private var mUser = FirebaseAuth.getInstance().currentUser
@@ -68,18 +72,29 @@ class ParametersActivity : AppCompatActivity() {
             mSharedPrefs.edit().putBoolean(KEY_SWITCH, switch_notifications.isChecked).apply()
         }
 
+        // Text inputs
         editName = findViewById(R.id.edit_name)
+        editImgUrl = findViewById(R.id.edit_imgurl)
+
         mDocRef.addSnapshotListener { snapshot, firestoreException ->
             if(snapshot.exists()){
+                // Puts database values into the text inputs
                 editName.setText(snapshot.getString("displayName"), TextView.BufferType.EDITABLE)
+                editImgUrl.setText(snapshot.getString("photoUrl"), TextView.BufferType.EDITABLE)
             }
         }
     }
 
     override fun onPause() {
+        super.onPause()
         // updates username in database
         mDocRef.update("displayName", editName.text.toString())
-        super.onPause()
+        mDocRef.update("photoUrl", editImgUrl.text.toString())
+        val profileUpdates = UserProfileChangeRequest.Builder()
+                .setDisplayName(editName.text.toString())
+                .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
+                .build()
+        mUser?.updateProfile(profileUpdates)
     }
 
     private fun setRecurringAlarm(context: Context) {

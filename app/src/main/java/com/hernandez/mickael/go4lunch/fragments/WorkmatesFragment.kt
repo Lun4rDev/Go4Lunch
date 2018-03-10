@@ -36,6 +36,7 @@ class WorkmatesFragment : Fragment() {
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+
         // Inflate the layout for this fragment
         val convertView = inflater.inflate(R.layout.fragment_workmates, container, false)
 
