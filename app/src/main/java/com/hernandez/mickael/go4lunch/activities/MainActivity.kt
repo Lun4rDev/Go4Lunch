@@ -507,4 +507,12 @@ open class MainActivity : AppCompatActivity(),
         return false
     }
 
+    fun getRestaurantCount(): Int {
+        return mListFragment.getList().size
+    }
+
+    fun getWorkmatesCount(): Int {
+        return mWorkmatesFragment.getList().size
+    }
+
 }

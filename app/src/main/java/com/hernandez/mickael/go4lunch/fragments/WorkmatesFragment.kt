@@ -83,4 +83,8 @@ class WorkmatesFragment : Fragment() {
         mAdapter = WorkmatesListAdapter(context!!, R.layout.row_workmate, workmatesList)
         mAdapter.notifyDataSetChanged()
     }
+
+    fun getList(): ArrayList<Workmate> {
+        return workmatesList
+    }
 }
