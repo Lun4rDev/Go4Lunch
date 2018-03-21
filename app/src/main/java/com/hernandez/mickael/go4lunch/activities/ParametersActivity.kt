@@ -24,6 +24,7 @@ import com.google.firebase.firestore.*
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.UserProfileChangeRequest
 
 /**
@@ -93,6 +94,15 @@ class ParametersActivity : AppCompatActivity() {
                 editImgUrl.setText(snapshot.getString("photoUrl"), TextView.BufferType.EDITABLE)
             }
         }
+        editImgUrl.addTextChangedListener(object: TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {}
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+
+            override fun onTextChanged(txt: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                Glide.with(applicationContext).load(txt.toString()).centerCrop().into(findViewById(R.id.image_profile))
+            }
+
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -103,6 +113,7 @@ class ParametersActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         // Handle item selection
         return when (item?.itemId) {
+
             // If the user wants to apply the changes
             R.id.action_apply -> {
                 val name = editName.text.toString()
