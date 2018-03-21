@@ -53,15 +53,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
-        mAuth = FirebaseAuth.getInstance()
-        if(mAuth.currentUser != null){
-            startMainActivity()
-        }
 
         // Catches GitHub auth intent
-        var uri = intent.data
+        val uri = intent.data
         if(uri != null && uri.toString().startsWith(getString(R.string.github_app_url))){
             val code = uri.getQueryParameter("code")
             val state = uri.getQueryParameter("state")
@@ -70,12 +64,15 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
         }
 
-        // Initialize Facebook SDK
-        FacebookSdk.sdkInitialize(this)
-
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
+        mAuth = FirebaseAuth.getInstance()
+        if(mAuth.currentUser != null){
+            startMainActivity()
+        }
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.

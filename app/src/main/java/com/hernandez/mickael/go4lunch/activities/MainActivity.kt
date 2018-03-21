@@ -201,12 +201,10 @@ open class MainActivity : AppCompatActivity(),
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
-        var navView = findViewById<NavigationView>(R.id.nav_view)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-        Glide.with(this).load(mUser!!.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
-
-        // Firestore user document
+        Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
         mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
     }
 
@@ -250,7 +248,7 @@ open class MainActivity : AppCompatActivity(),
     /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
         mDocRef.addSnapshotListener { snapshot, firestoreException ->
-            if(snapshot.exists()){
+            if(snapshot != null && snapshot.exists()){
                 val hMap = HashMap<String, Any>()
                 if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
                 if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
