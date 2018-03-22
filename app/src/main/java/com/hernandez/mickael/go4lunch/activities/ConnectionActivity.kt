@@ -276,7 +276,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     /** Start MainActivity for result */
     private fun startMainActivity(){
-        startActivityForResult(Intent(applicationContext, MainActivity::class.java), RC_LOGOUT)
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivityForResult(intent, RC_LOGOUT)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

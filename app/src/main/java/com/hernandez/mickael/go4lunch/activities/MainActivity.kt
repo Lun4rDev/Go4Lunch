@@ -161,11 +161,12 @@ open class MainActivity : AppCompatActivity(),
 
         nav_view.setNavigationItemSelectedListener(this)
 
+        // Retain map fragment instance
+        mMapFragment.retainInstance = true
+
         //mMapFragment = map as SupportMapFragment
         mMapFragment.getMapAsync(this)
 
-        // Retain map fragment instance
-        mMapFragment.retainInstance = true
 
         // Bottom bar navigation adapter
         pagerAdapter = BottomBarAdapter(supportFragmentManager)
@@ -301,6 +302,8 @@ open class MainActivity : AppCompatActivity(),
             }
             true
         }
+
+        searchRestaurants("")
     }
 
     /** Get permission to access device location */
@@ -457,11 +460,11 @@ open class MainActivity : AppCompatActivity(),
                         marker.title(place.name.toString())
                         marker.snippet(place.address.toString())
                         marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                        if(::mMap.isInitialized){
-                            mMap.addMarker(marker)
+                        mMap.addMarker(marker)
+                        /*if(::mMap.isInitialized){
                         } else {
                             markerBuffer.add(marker)
-                        }
+                        }*/
 
                         val mates = ArrayList<Workmate>()
                         mColRef.addSnapshotListener { colSnapshot, p1 ->
@@ -480,7 +483,11 @@ open class MainActivity : AppCompatActivity(),
                         Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
                             if(it.photoMetadata != null && it.photoMetadata.count > 0) {
                                 it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+
+                                   // Add the restaurant to the list
                                     mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap))
+
+                                    // Hides the loading animation
                                     if(loading_view.visibility == View.VISIBLE){
                                         loading_view.visibility = View.GONE
                                     }

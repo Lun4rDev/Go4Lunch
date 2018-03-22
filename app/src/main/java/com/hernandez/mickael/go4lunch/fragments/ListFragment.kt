@@ -67,11 +67,13 @@ class ListFragment : Fragment() {
     }
 
     fun resetList(){
-        placesList.clear()
-        mAdapter.notifyDataSetChanged()
-        /*if(!mAdapter.isEmpty){
+        if(placesList.size > 0){
+            placesList.clear()
             mAdapter.notifyDataSetChanged()
-        }*/
+            /*if(!mAdapter.isEmpty){
+                mAdapter.notifyDataSetChanged()
+            }*/
+        }
     }
 
     fun getList(): ArrayList<Restaurant>{
@@ -79,7 +81,9 @@ class ListFragment : Fragment() {
     }
 
     fun addRestaurant(place: Restaurant){
-        placesList.add(place)
-        mAdapter.notifyDataSetChanged()
+        if(placesList.none { it.id == place.id }){
+            placesList.add(place)
+            mAdapter.notifyDataSetChanged()
+        }
     }
 }
