@@ -87,8 +87,8 @@ class ParametersActivity : AppCompatActivity() {
         editImgUrl = findViewById(R.id.edit_imgurl)
 
         // Database call
-        mDocRef.addSnapshotListener { snapshot, firestoreException ->
-            if(snapshot.exists()){
+        mDocRef.addSnapshotListener { snapshot, _ ->
+            if(snapshot != null && snapshot.exists()){
                 // Puts database values into the text inputs
                 editName.setText(snapshot.getString("displayName"), TextView.BufferType.EDITABLE)
                 editImgUrl.setText(snapshot.getString("photoUrl"), TextView.BufferType.EDITABLE)

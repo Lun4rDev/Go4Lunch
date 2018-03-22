@@ -202,11 +202,13 @@ open class MainActivity : AppCompatActivity(),
 
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
-        val navView = findViewById<NavigationView>(R.id.nav_view)
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
-        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-        Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
-        mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+        if(mUser != null && mUser?.uid != null){
+            val navView = findViewById<NavigationView>(R.id.nav_view)
+            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
+            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
+            Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
+            mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+        }
     }
 
     /** Displays restaurant according to its id */
@@ -248,13 +250,15 @@ open class MainActivity : AppCompatActivity(),
 
     /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
-        mDocRef.addSnapshotListener { snapshot, firestoreException ->
-            if(snapshot != null && snapshot.exists()){
-                val hMap = HashMap<String, Any>()
-                if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
-                if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
-                if(!snapshot.contains("photoUrl")) hMap["photoUrl"] = mUser!!.photoUrl.toString()
-                mDocRef.update(hMap)
+        if(::mDocRef.isInitialized){
+            mDocRef.addSnapshotListener { snapshot, firestoreException ->
+                if(snapshot != null && snapshot.exists()){
+                    val hMap = HashMap<String, Any>()
+                    if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
+                    if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
+                    if(!snapshot.contains("photoUrl")) hMap["photoUrl"] = mUser!!.photoUrl.toString()
+                    mDocRef.update(hMap)
+                }
             }
         }
     }
@@ -303,7 +307,7 @@ open class MainActivity : AppCompatActivity(),
             true
         }
 
-        searchRestaurants("")
+        searchRestaurants("restaurant")
     }
 
     /** Get permission to access device location */
@@ -468,7 +472,7 @@ open class MainActivity : AppCompatActivity(),
 
                         val mates = ArrayList<Workmate>()
                         mColRef.addSnapshotListener { colSnapshot, p1 ->
-                            if(colSnapshot.documents.isNotEmpty()){
+                            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                                 for(doc in colSnapshot.documents){
                                     if(doc.get("restaurantId") == place.id){
                                         mates.add(doc.toObject(Workmate::class.java))
