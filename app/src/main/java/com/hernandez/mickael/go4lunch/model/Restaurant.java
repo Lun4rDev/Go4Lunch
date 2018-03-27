@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.SparseBooleanArray;
+
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlacePhotoResult;
 
@@ -46,10 +48,14 @@ public class Restaurant implements Parcelable {
     // Distance
     public Float distance;
 
+    // Workmates coming to this restaurant
     public ArrayList workmates;
 
+    // True if open
+    public Boolean open;
 
-    public Restaurant(Place place, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg){
+
+    public Restaurant(Place place, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg, Boolean pOpen){
         id = place.getId();
         name = place.getName();
         type = place.getPlaceTypes().get(0);
@@ -60,6 +66,7 @@ public class Restaurant implements Parcelable {
         workmates = pWorkmates;
         distance = pDistance;
         img = pImg;
+        open = pOpen;
     }
 
     private Restaurant(Parcel in) {
@@ -72,6 +79,7 @@ public class Restaurant implements Parcelable {
         website = in.readString();
         workmates = in.readArrayList(Workmate.class.getClassLoader());
         distance = in.readFloat();
+        open = in.readByte() != 0;
         //img = in.readParcelable(PlacePhotoResult.class.getClassLoader());
     }
 
@@ -91,6 +99,7 @@ public class Restaurant implements Parcelable {
         dest.writeString(website);
         dest.writeList(workmates);
         dest.writeFloat(distance);
+        dest.writeByte((byte) (open ? 1 : 0));
         //dest.writeParcelable(img, 0);
     }
 

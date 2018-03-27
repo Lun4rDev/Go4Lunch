@@ -44,7 +44,7 @@ class ParametersActivity : AppCompatActivity() {
     private lateinit var editImgUrl : EditText
 
     // Fill UI with Firebase user data
-    private var mUser = FirebaseAuth.getInstance().currentUser
+    var mUser = FirebaseAuth.getInstance().currentUser
 
     // Firestore user document
     private var mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)

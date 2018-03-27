@@ -67,12 +67,13 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
         mAuth = FirebaseAuth.getInstance()
         if(mAuth.currentUser != null){
             startMainActivity()
         }
+
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -203,8 +204,8 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
 
             override fun onResponse(call: Call?, response: Response?) {
-                val responseBody = response!!.body().string()
-                val split = responseBody.split("[=&]".toRegex())
+                val responseBody = response?.body()?.string()
+                val split = responseBody!!.split("[=&]".toRegex())
                 if(split[0] == "access_token") {
                     signInGitHub(split[1])
                 } else {

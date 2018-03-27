@@ -29,9 +29,9 @@ class AlarmReceiver: BroadcastReceiver() {
         // Intent opened by the click on notification
         val pI = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), 0)
 
-        var uid = FirebaseAuth.getInstance().uid!!
+        val uid = FirebaseAuth.getInstance().uid!!
         var placeSelected = false
-        var placeName = ""
+        var placeName: String
         var matesCount = 0
 
         mDocRef = mColRef.document(uid)
@@ -58,13 +58,13 @@ class AlarmReceiver: BroadcastReceiver() {
 
 
         // User firestore document
-        mDocRef.addSnapshotListener { snapshot, firestoreException ->
+        mDocRef.addSnapshotListener { snapshot, _ ->
             // if a restaurant is selected
             if(snapshot.contains("restaurantName") && snapshot.getString("restaurantName") != ""){
                 placeSelected = true
                 placeName = snapshot.getString("restaurantName")
                 // search in every user document for workmates going to the same place
-                mColRef.addSnapshotListener { pSnapshot, pFirestoreException ->
+                mColRef.addSnapshotListener { pSnapshot, _ ->
                     if(!pSnapshot.isEmpty){
                         pSnapshot.forEach {
                             if(it.getString("restaurantName") == placeName && it.getString("uid") != uid){

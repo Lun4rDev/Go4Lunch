@@ -85,18 +85,6 @@ class MainActivityTest {
         //onView(instanceOf(WorkmatesFragment::class.java)).check(matches(isDisplayed()))
     }
 
-    /** Tests that the parameters open via the nav drawer */
-    @Test
-    fun parametersViaNavigationDrawer() {
-        // register next activity that need to be monitored.
-        val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(ParametersActivity::class.java.name, null, false)
-        Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
-        Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_settings)) // clicks on the top stories item in drawer
-        val nextActivity = getInstrumentation().waitForMonitorWithTimeout(activityMonitor, 5000)
-        assertNotNull(nextActivity) // assert that the selected tab is the second (top stories tab)
-        nextActivity.finish()
-    }
-
     /** Tests the launch of RestaurantActivity via the restaurants ListView */
     @Test
     fun restaurantViaListView() {
@@ -110,6 +98,29 @@ class MainActivityTest {
         nextActivity.finish()
     }
 
+    /** Tests that the parameters open via the nav drawer */
+    @Test
+    fun parametersViaNavigationDrawer() {
+        // register next activity that need to be monitored.
+        val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(ParametersActivity::class.java.name, null, false)
+        Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
+        Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_settings)) // clicks on the top stories item in drawer
+        val nextActivity = getInstrumentation().waitForMonitorWithTimeout(activityMonitor, 5000)
+        assertNotNull(nextActivity) // assert that the selected tab is the second (top stories tab)
+        nextActivity.finish()
+    }
+
+    /** Tests that the user disconnects via the nav drawer */
+    @Test
+    fun logoutViaNavigationDrawer() {
+        // register next activity that need to be monitored.
+        val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(ConnectionActivity::class.java.name, null, false)
+        Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
+        Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_logout)) // clicks on the top stories item in drawer
+        val nextActivity = getInstrumentation().waitForMonitorWithTimeout(activityMonitor, 5000)
+        assertNotNull(nextActivity) // assert that the selected tab is the second (top stories tab)
+        nextActivity.finish()
+    }
 
     // TODO: Obsolete if above works
     /** Tests the search field and that it generates restaurants in the list */

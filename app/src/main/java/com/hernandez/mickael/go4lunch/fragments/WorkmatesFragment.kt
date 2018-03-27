@@ -63,7 +63,7 @@ class WorkmatesFragment : Fragment() {
         }
 
         // Populating workmates list with Firestore data
-        mColRef.addSnapshotListener { colSnapshot, p1 ->
+        mColRef.addSnapshotListener { colSnapshot, _ ->
             if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                 workmatesList.clear()
                 for(doc in colSnapshot.documents){

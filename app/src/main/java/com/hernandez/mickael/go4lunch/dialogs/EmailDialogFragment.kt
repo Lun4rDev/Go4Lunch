@@ -41,9 +41,6 @@ class EmailDialogFragment:DialogFragment() {
     override fun onCreateDialog(savedInstanceState:Bundle?):Dialog {
         val builder = AlertDialog.Builder(this.activity!!)
 
-        // Get the layout inflater
-        val inflater = activity!!.layoutInflater
-
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
         val view = View.inflate(context, R.layout.dialog_signin, null)

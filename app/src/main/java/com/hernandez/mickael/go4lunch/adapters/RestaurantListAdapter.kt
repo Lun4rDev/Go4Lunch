@@ -28,7 +28,11 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
         convertView.findViewById<TextView>(R.id.place_desc).text = item.address
 
         // Opening time
-        //convertView.findViewById<TextView>(R.id.place_open).text = item.phoneNumber
+        if(item.open != null && item.open){
+            convertView.findViewById<TextView>(R.id.place_open).text = "open"
+        } else {
+            convertView.findViewById<TextView>(R.id.place_open).text = "closed"
+        }
 
         // Workmates number
         convertView.findViewById<TextView>(R.id.place_mates).text = "(" + item.workmates.size + ")"

@@ -22,7 +22,7 @@ public class Workmate implements Parcelable {
     // Restaurant name
     public String restaurantName;
 
-    private Workmate(){}
+    Workmate(){}
 
     private Workmate(String pUid, String pDisplayName, String pPhotoUrl, String pRestaurantId, String pRestaurantName){
         uid = pUid;
