@@ -317,8 +317,6 @@ open class MainActivity : AppCompatActivity(),
                 displayRestaurant(res.id)
             }
         }
-
-        nearbyRestaurants()
     }
 
     /** Get permission to access device location */
@@ -375,6 +373,7 @@ open class MainActivity : AppCompatActivity(),
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                                 LatLng(mLastKnownLocation.latitude,
                                         mLastKnownLocation.longitude), DEFAULT_ZOOM))
+                        nearbyRestaurants()
                     } else {
                         //Log.d(TAG, "Current location is null. Using defaults.")
                         //Log.e(TAG, "Exception: %s", task.getException())
@@ -565,6 +564,7 @@ open class MainActivity : AppCompatActivity(),
 
     fun addRestaurants(res: List<Result>){
         for(p in res){
+            val open = p.openingHours != null && p.openingHours.openNow
             // Distance between last location and restaurant
             val distance = floatArrayOf(0f)
             Location.distanceBetween(p.geometry.location.lat, p.geometry.location.lng,
@@ -594,8 +594,20 @@ open class MainActivity : AppCompatActivity(),
             Places.GeoDataApi.getPlaceById(mGoogleApiClient, p.placeId).setResultCallback {
                 if(it.status.isSuccess && it.count > 0){
                     val place = it.get(0)
-                    doAsync {
-                        val url = URL(p.icon)
+                    Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
+                        if (it.photoMetadata != null && it.photoMetadata.count > 0) {
+                            it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                // Add the restaurant to the list
+                                mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap, open))
+                                // Hides the loading animation
+                                if(loading_view.visibility == View.VISIBLE){
+                                    loading_view.visibility = View.GONE
+                                }
+                            }
+                        }
+                    }
+                    /*doAsync {
+                        val url = URL(p.photos[0].)
                         val img = BitmapFactory.decodeStream(url.openStream())
                         val open = p.openingHours.openNow
 
@@ -607,7 +619,7 @@ open class MainActivity : AppCompatActivity(),
                                 loading_view.visibility = View.GONE
                             }
                         }
-                    }
+                    }*/
                 }
             }
         }
