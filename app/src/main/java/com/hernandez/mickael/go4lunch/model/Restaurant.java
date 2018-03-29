@@ -1,43 +1,35 @@
 package com.hernandez.mickael.go4lunch.model;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.SparseBooleanArray;
 
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlacePhotoResult;
+import com.hernandez.mickael.go4lunch.model.details.DetailsResult;
 
 import java.util.ArrayList;
-
-import kotlinx.android.parcel.Parceler;
-import kotlinx.android.parcel.Parcelize;
-
-import static java.lang.System.out;
 
 
 /**
  * Created by Mickael Hernandez on 05/02/2018.
  */
 public class Restaurant implements Parcelable {
-    // Place ID
+    // result ID
     public String id;
 
     // Name
     public CharSequence name;
 
     // Type
-    public Integer type;
+    public String type;
 
     // Address
     public CharSequence address;
 
     // Rating
-    public Float rating;
+    public Double rating = -1d;
 
     // Phone number
-    public CharSequence phone;
+    public CharSequence phone = "";
 
     // Website
     public String website;
@@ -55,32 +47,32 @@ public class Restaurant implements Parcelable {
     public Boolean open;
 
 
-    public Restaurant(Place place, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg, Boolean pOpen){
-        id = place.getId();
-        name = place.getName();
-        type = place.getPlaceTypes().get(0);
-        address = place.getAddress();
-        rating = place.getRating();
-        phone = place.getPhoneNumber();
-        if(place.getWebsiteUri() != null){website = place.getWebsiteUri().toString();}
+    public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg, Boolean pOpen){
+        id = result.getId();
+        name = result.getName();
+        type = result.getTypes().get(0);
+        address = result.getFormattedAddress();
         workmates = pWorkmates;
         distance = pDistance;
         img = pImg;
         open = pOpen;
+        if(result.getFormattedPhoneNumber() != null){ phone = result.getFormattedPhoneNumber(); }
+        if(result.getRating() != null){rating = result.getRating();}
+        if(result.getWebsite() != null){website = result.getWebsite();}
     }
 
     private Restaurant(Parcel in) {
         id = in.readString();
         name = in.readString();
-        type = in.readInt();
+        type = in.readString();
         address = in.readString();
-        rating = in.readFloat();
+        rating = in.readDouble();
         phone= in.readString();
         website = in.readString();
         workmates = in.readArrayList(Workmate.class.getClassLoader());
         distance = in.readFloat();
         open = in.readByte() != 0;
-        //img = in.readParcelable(PlacePhotoResult.class.getClassLoader());
+        //img = in.readParcelable(resultPhotoResult.class.getClassLoader());
     }
 
     @Override
@@ -92,9 +84,9 @@ public class Restaurant implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(id);
         dest.writeString(name.toString());
-        dest.writeInt(type);
+        dest.writeString(type);
         dest.writeString(address.toString());
-        dest.writeFloat(rating);
+        dest.writeDouble(rating);
         dest.writeString(phone.toString());
         dest.writeString(website);
         dest.writeList(workmates);
@@ -122,28 +114,28 @@ public class Restaurant implements Parcelable {
 data class Restaurant(var pId: String, val pName: CharSequence, val pType: Int, val pAddress: CharSequence, val pRating: Float): Parcelable {
     constructor() : this()
 }*/
-/*data class Restaurant(val place: Place): Parcelable {
+/*data class Restaurant(val result: result): Parcelable {
 
-    // Place ID
-    var id = place.id
+    // result ID
+    var id = result.id
 
     // Name
-    var name: CharSequence = place.name
+    var name: CharSequence = result.name
 
     // Type
-    private var type = place.placeTypes[0]
+    private var type = result.resultTypes[0]
 
     // Address
-    var address: CharSequence = place.address
+    var address: CharSequence = result.address
 
     // Rating
-    var rating = place.rating
+    var rating = result.rating
 
     // Distance
     var distance = 0.0f
 
     // Image
-    lateinit var img: PlacePhotoResult
+    lateinit var img: resultPhotoResult
 
     /*constructor(parcel: Parcel) : this(
         id = parcel.readString(),
@@ -152,7 +144,7 @@ data class Restaurant(var pId: String, val pName: CharSequence, val pType: Int, 
         address = parcel.readString(),
         rating = parcel.readFloat(),
         distance = parcel.readFloat(),
-        img = parcel.readParcelable<Bitmap>(PlacePhotoResult::class.java.classLoader))*/
+        img = parcel.readParcelable<Bitmap>(resultPhotoResult::class.java.classLoader))*/
 
     /*override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)

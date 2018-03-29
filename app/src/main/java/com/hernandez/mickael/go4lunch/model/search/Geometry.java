@@ -1,4 +1,4 @@
-package com.hernandez.mickael.go4lunch.model.webapi;
+package com.hernandez.mickael.go4lunch.model.search;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

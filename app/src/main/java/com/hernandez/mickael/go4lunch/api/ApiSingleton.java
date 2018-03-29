@@ -9,6 +9,7 @@ import com.hernandez.mickael.go4lunch.R;
 
 import java.io.IOException;
 
+import io.reactivex.internal.schedulers.RxThreadFactory;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -16,6 +17,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
@@ -70,6 +72,7 @@ public class ApiSingleton {
         return new Retrofit.Builder()
                 .baseUrl(ApiInterface.API_BASE_URL)
                 .client(okHttpClient)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
     }

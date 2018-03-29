@@ -74,4 +74,6 @@
     <string name="changes_success">Changes have been saved successfully.</string>
     <string name="display_name">Name :</string>
     <string name="picture_url">Picture URL :</string>
+    <string name="open">open</string>
+    <string name="closed">closed</string>
 </resources>

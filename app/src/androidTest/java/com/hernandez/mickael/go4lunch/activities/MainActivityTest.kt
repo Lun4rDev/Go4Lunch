@@ -122,7 +122,6 @@ class MainActivityTest {
         nextActivity.finish()
     }
 
-    // TODO: Obsolete if above works
     /** Tests the search field and that it generates restaurants in the list */
     @Test
     fun search() {

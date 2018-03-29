@@ -37,4 +37,6 @@
     <string name="restaurant_list">Liste des restaurants</string>
     <string name="display_name">Display name :</string>
     <string name="picture_url">URL de l\'image :</string>
+    <string name="open">ouvert</string>
+    <string name="closed">fermé</string>
 </resources>

@@ -1,13 +1,9 @@
 package com.hernandez.mickael.go4lunch.api;
 
-import android.content.res.Resources;
-import android.location.Location;
+import com.hernandez.mickael.go4lunch.model.details.DetailsResponse;
+import com.hernandez.mickael.go4lunch.model.search.SearchResponse;
 
-import com.hernandez.mickael.go4lunch.R;
-import com.hernandez.mickael.go4lunch.model.webapi.SearchResponse;
-
-import java.util.Vector;
-
+import io.reactivex.Observable;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
@@ -38,5 +34,10 @@ public interface ApiInterface {
             @Query("location") String loc,
             @Query("radius") Integer rad,
             @Query("type") Integer type);
+
+    /** Place Details API call */
+    @GET("details/json")
+    Observable<DetailsResponse> details(
+            @Query("placeid") String placeId);
 
 }

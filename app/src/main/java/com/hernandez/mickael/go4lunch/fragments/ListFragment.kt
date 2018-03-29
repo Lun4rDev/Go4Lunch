@@ -50,7 +50,7 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Setting up adapter with arrayList
-        listView = view.findViewById<ListView>(R.id.places_list)
+        listView = view.findViewById(R.id.places_list)
         listView.adapter = mAdapter
         listView.emptyView = view.findViewById(R.id.list_empty)
 
