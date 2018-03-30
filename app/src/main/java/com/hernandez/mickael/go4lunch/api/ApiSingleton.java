@@ -57,7 +57,11 @@ public class ApiSingleton {
             @Override
             public Response intercept(Chain chain) throws IOException {
                 Request request = chain.request();
-                HttpUrl url = request.url().newBuilder().addQueryParameter("key", ApiInterface.API_KEY).build();
+                HttpUrl url = request.url().newBuilder()
+                        .addQueryParameter("type", "restaurant") // Only searching restaurants
+                        .addQueryParameter("key", ApiInterface.API_KEY) // Places API Key
+                        .build();
+
                 request = request.newBuilder().url(url).build();
                 return chain.proceed(request);
             }

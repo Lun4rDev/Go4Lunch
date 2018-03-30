@@ -24,16 +24,14 @@ public interface ApiInterface {
     @GET("nearbysearch/json")
     Call<SearchResponse> nearbySearch(
             @Query("location") String loc,
-            @Query("radius") Integer rad,
-            @Query("type") Integer type);
+            @Query("radius") Integer rad);
 
     /** Text Search API call */
     @GET("textsearch/json")
     Call<SearchResponse> textSearch(
             @Query("query") String query,
             @Query("location") String loc,
-            @Query("radius") Integer rad,
-            @Query("type") Integer type);
+            @Query("radius") Integer rad);
 
     /** Place Details API call */
     @GET("details/json")

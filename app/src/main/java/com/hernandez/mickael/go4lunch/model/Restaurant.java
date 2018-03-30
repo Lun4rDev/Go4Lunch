@@ -48,7 +48,7 @@ public class Restaurant implements Parcelable {
 
 
     public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance, Bitmap pImg, Boolean pOpen){
-        id = result.getId();
+        id = result.getPlaceId();
         name = result.getName();
         type = result.getTypes().get(0);
         address = result.getFormattedAddress();

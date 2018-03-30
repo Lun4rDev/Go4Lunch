@@ -110,6 +110,8 @@ open class MainActivity : AppCompatActivity(),
 
     private var mDefaultLocation = LatLng(.0, .0)
 
+    private var mRadius = 10000
+
     /** Map fragment */
     private var mMapFragment = SupportMapFragment()
 
@@ -376,9 +378,9 @@ open class MainActivity : AppCompatActivity(),
             R.id.item_lunch -> {
                 if(::mDocRef.isInitialized){
                     mDocRef.get().addOnCompleteListener {
-                        if(it.isSuccessful){
+                        if(it.isSuccessful && it.result.exists()){
                             val id = it.result.getString("restaurantId")
-                            if(it.result.exists() && id != "") {
+                            if(id != "") {
                                 displayRestaurant(id)
                             } else {
                                 Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()
@@ -481,7 +483,7 @@ open class MainActivity : AppCompatActivity(),
         // Removes all markers on map
         mMap.clear()
 
-        ApiSingleton.getInstance().nearbySearch(locToStr(mLastKnownLocation), 500, Place.TYPE_RESTAURANT).enqueue(object: Callback<SearchResponse>{
+        ApiSingleton.getInstance().nearbySearch(locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
             override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {
             }
 
@@ -506,7 +508,7 @@ open class MainActivity : AppCompatActivity(),
         // Removes all markers on map
         mMap.clear()
 
-        ApiSingleton.getInstance().textSearch(query, locToStr(mLastKnownLocation), 500, Place.TYPE_RESTAURANT).enqueue(object: Callback<SearchResponse>{
+        ApiSingleton.getInstance().textSearch(query, locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
             override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {
 
             }
@@ -572,7 +574,7 @@ open class MainActivity : AppCompatActivity(),
     /** Adds the restaurants to the Map and List fragments */
     fun addRestaurants(res: List<Result>){
         for(p in res){
-            if(p.types.contains("restaurant")){
+            //if(p.types.contains("restaurant")){
                 val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
                 // Distance between last location and restaurant
                 val distance = floatArrayOf(0f)
@@ -653,7 +655,7 @@ open class MainActivity : AppCompatActivity(),
                         }
                     }
                 }*/
-            }
+            //}
         }
     }
 
