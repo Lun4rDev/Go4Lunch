@@ -5,7 +5,7 @@
 
     <!-- Login buttons sizes -->
     <dimen name="button_login_width">230dp</dimen>
-    <dimen name="button_login_height">38dp</dimen>
+    <dimen name="button_login_height">1dp</dimen>
     <dimen name="button_login_margin">5dp</dimen>
 
     <dimen name="row_height">80dp</dimen>

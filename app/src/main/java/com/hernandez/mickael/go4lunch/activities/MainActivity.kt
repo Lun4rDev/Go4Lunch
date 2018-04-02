@@ -595,7 +595,7 @@ open class MainActivity : AppCompatActivity(),
                 mColRef.addSnapshotListener { colSnapshot, _ ->
                     if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                         for(doc in colSnapshot.documents){
-                            if(doc.get("restaurantId") == p.id){
+                            if(doc.get("restaurantId") == p.placeId){
                                 mates.add(doc.toObject(Workmate::class.java))
                             }
                         }
@@ -604,6 +604,7 @@ open class MainActivity : AppCompatActivity(),
                         }
                     }
                 }
+                // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
