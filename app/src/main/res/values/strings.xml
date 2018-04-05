@@ -76,4 +76,5 @@
     <string name="picture_url">Picture URL :</string>
     <string name="open">open</string>
     <string name="closed">closed</string>
+    <string name="params_missing">One of the parameters is missing.</string>
 </resources>

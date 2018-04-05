@@ -25,7 +25,11 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.google.firebase.auth.UserProfileChangeRequest
+import java.lang.Exception
 
 /**
  * Created by Mickael Hernandez on 22/02/2018.
@@ -42,6 +46,8 @@ class ParametersActivity : AppCompatActivity() {
     private lateinit var editName : EditText
 
     private lateinit var editImgUrl : EditText
+
+    private var isimageValid = false
 
     // Fill UI with Firebase user data
     var mUser = FirebaseAuth.getInstance().currentUser
@@ -99,9 +105,19 @@ class ParametersActivity : AppCompatActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
 
             override fun onTextChanged(txt: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Glide.with(applicationContext).load(txt.toString()).centerCrop().into(findViewById(R.id.image_profile))
-            }
+                Glide.with(applicationContext).load(txt.toString()).centerCrop().listener(object : RequestListener<String, GlideDrawable> {
+                    override fun onException(e: Exception?, model: String?, target: Target<GlideDrawable>?, isFirstResource: Boolean): Boolean {
+                        isimageValid = false
+                        return true
+                    }
 
+                    override fun onResourceReady(resource: GlideDrawable?, model: String?, target: Target<GlideDrawable>?, isFromMemoryCache: Boolean, isFirstResource: Boolean): Boolean {
+                        isimageValid = true
+                        return false
+                    }
+
+                }).into(findViewById(R.id.image_profile))
+            }
         })
     }
 
@@ -119,21 +135,27 @@ class ParametersActivity : AppCompatActivity() {
                 val name = editName.text.toString()
                 val imgUrl = editImgUrl.text.toString()
                 if(name != "" && imgUrl != ""){
-                    // updates username in database
-                    mDocRef.update("displayName", name)
-                    mDocRef.update("photoUrl", imgUrl)
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                            .setDisplayName(editName.text.toString())
-                            .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
-                            .build()
-                    mUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
-                        if(it.isSuccessful){
-                            Toast.makeText(applicationContext, getString(R.string.changes_success),Toast.LENGTH_SHORT).show()
-                            finish()
-                        } else {
-                            Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                    if(isimageValid){
+                        // updates username in database
+                        mDocRef.update("displayName", name)
+                        mDocRef.update("photoUrl", imgUrl)
+                        val profileUpdates = UserProfileChangeRequest.Builder()
+                                .setDisplayName(editName.text.toString())
+                                .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
+                                .build()
+                        mUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                            if(it.isSuccessful){
+                                Toast.makeText(applicationContext, getString(R.string.changes_success),Toast.LENGTH_SHORT).show()
+                                finish()
+                            } else {
+                                Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
+                            }
                         }
+                    } else {
+                        Toast.makeText(applicationContext, "Invalid image URL", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(applicationContext, getString(R.string.params_missing), Toast.LENGTH_SHORT).show()
                 }
                 true
             }
