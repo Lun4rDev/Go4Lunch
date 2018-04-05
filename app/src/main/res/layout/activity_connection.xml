@@ -10,25 +10,24 @@
 
         <ImageView
             android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginBottom="5dp"
+            android:layout_height="10dp"
+            android:layout_marginTop="30dp"
             android:layout_weight="1"
             android:src="@drawable/ic_forkandknife"
             app:srcCompat="@drawable/ic_forkandknife"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:layout_weight="1"
-            android:text="@string/app_name"
-            android:textColor="#fff"
-            android:textSize="45sp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/app_name"
+        android:textColor="@android:color/white"
+        android:textSize="33sp"/>
 
         <com.facebook.login.widget.LoginButton
             android:id="@+id/btn_facebook"
             android:layout_width="@dimen/button_login_width"
-            android:layout_height="@dimen/button_login_height"
+            android:layout_height="2dp"
             android:layout_margin="@dimen/button_login_margin"
             android:layout_weight="1"/>
 

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
@@ -25,15 +26,14 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.places.*
+import com.google.android.gms.location.places.GeoDataClient
+import com.google.android.gms.location.places.PlaceDetectionClient
+import com.google.android.gms.location.places.Places
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
@@ -49,14 +49,11 @@ import com.hernandez.mickael.go4lunch.model.Workmate
 import com.hernandez.mickael.go4lunch.model.details.DetailsResponse
 import com.hernandez.mickael.go4lunch.model.search.Result
 import com.hernandez.mickael.go4lunch.model.search.SearchResponse
-import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -84,6 +81,8 @@ open class MainActivity : AppCompatActivity(),
     /** Firebase user object */
     var mUser : FirebaseUser? = null
 
+    private var mWorkmatesList = ArrayList<Workmate>()
+
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
 
@@ -94,7 +93,6 @@ open class MainActivity : AppCompatActivity(),
     private var mLocationPermissionGranted = false
 
     /** Google APIs clients */
-
     private lateinit var mGoogleApiClient: GoogleApiClient
 
     private lateinit var mGeoDataClient: GeoDataClient
@@ -106,10 +104,13 @@ open class MainActivity : AppCompatActivity(),
     /** User last known location */
     private var mLastKnownLocation = Location("")
 
+    /** Default GoogleMap zoom value */
     private val DEFAULT_ZOOM = 16f
 
+    /** Default user location */
     private var mDefaultLocation = LatLng(.0, .0)
 
+    /** Radius in meters used in Nearby Places detection */
     private var mRadius = 10000
 
     /** Map fragment */
@@ -126,6 +127,7 @@ open class MainActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Limiting the offscreen page limit of the viewpager
         viewPager.offscreenPageLimit = 3
 
         // Shared Preferences
@@ -139,7 +141,6 @@ open class MainActivity : AppCompatActivity(),
                 .enableAutoManage(this, this)
                 .build()
         mGoogleApiClient.connect()
-
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null)
@@ -208,9 +209,7 @@ open class MainActivity : AppCompatActivity(),
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
         val searchView = si.actionView as SearchView
-        /*val searchText = searchView.findViewById<EditText>(android.support.v7.appcompat.R.id.search_src_text)
-        searchText.setTextColor(Color.WHITE)
-        searchText.setHintTextColor(Color.WHITE)*/
+
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
 
@@ -222,6 +221,13 @@ open class MainActivity : AppCompatActivity(),
             navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
             Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
             mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+            mColRef.addSnapshotListener { colSnapshot, _ ->
+                    if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
+                        for(doc in colSnapshot.documents){
+                            mWorkmatesList.add(doc.toObject(Workmate::class.java))
+                        }
+                    }
+            }
         }
     }
 
@@ -261,13 +267,6 @@ open class MainActivity : AppCompatActivity(),
         if ((ContextCompat.checkSelfPermission(this.applicationContext,
                         android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             mMap.isMyLocationEnabled = true
-        }
-
-        if(markerBuffer.size > 0){
-            for (m in markerBuffer){
-                mMap.addMarker(m)
-            }
-            markerBuffer.clear()
         }
 
         // Location button
@@ -411,13 +410,10 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
-
     /** On Google API connection failed */
     override fun onConnectionFailed(p0: ConnectionResult) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
-    private var markerBuffer = ArrayList<MarkerOptions>()
 
     private fun locToStr(loc: Location): String {
         return "${loc.latitude}, ${loc.longitude}"
@@ -575,35 +571,35 @@ open class MainActivity : AppCompatActivity(),
     fun addRestaurants(res: List<Result>){
         for(p in res){
             //if(p.types.contains("restaurant")){
-                val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
-                // Distance between last location and restaurant
-                val distance = floatArrayOf(0f)
-                Location.distanceBetween(p.geometry.location.lat, p.geometry.location.lng,
+            val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
+            // Distance between last location and restaurant
+            val distance = floatArrayOf(0f)
+            Location.distanceBetween(p.geometry.location.lat, p.geometry.location.lng,
                         mLastKnownLocation.latitude, mLastKnownLocation.longitude,
                         distance)
 
-                // Map marker
-                val marker = MarkerOptions()
-                marker.position(LatLng(p.geometry.location.lat, p.geometry.location.lng))
-                marker.title(p.name.toString())
-                marker.snippet(p.vicinity?.toString())
-                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                val m = mMap.addMarker(marker)
-                m.tag = p.placeId
+            // Map marker
+            val marker = MarkerOptions()
+            marker.position(LatLng(p.geometry.location.lat, p.geometry.location.lng))
+            marker.title(p.name.toString())
+            marker.snippet(p.vicinity?.toString())
+            marker.icon(bitmapDescriptorFromVector(applicationContext, R.drawable.ic_marker))
 
-                val mates = ArrayList<Workmate>()
-                mColRef.addSnapshotListener { colSnapshot, _ ->
-                    if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
-                        for(doc in colSnapshot.documents){
-                            if(doc.get("restaurantId") == p.placeId){
-                                mates.add(doc.toObject(Workmate::class.java))
-                            }
-                        }
-                        if(mates.count() > 0){
-                            marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_green))
-                        }
+            val mates = ArrayList<Workmate>()
+            if(mWorkmatesList.size > 0){
+                for(wm in mWorkmatesList){
+                    if(wm.restaurantId == p.placeId && wm.uid != mUser?.uid){
+                        mates.add(wm)
                     }
                 }
+                if(mates.size > 0){
+                    marker.icon(bitmapDescriptorFromVector(applicationContext, R.drawable.ic_marker_green))
+                }
+            }
+
+            val m = mMap.addMarker(marker)
+            m.tag = p.placeId
+
                 // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
                         .subscribeOn(Schedulers.io())
@@ -639,24 +635,6 @@ open class MainActivity : AppCompatActivity(),
                             }
 
                         })
-                /*override fun onResponse(call: Call<DetailsResponse>?, response: Response<DetailsResponse>?) {
-                    val result = response?.body()?.detailsResult
-                    if(result != null){
-                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
-                            if (it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                    // Add the restaurant to the list
-                                    mListFragment.addRestaurant(Restaurant(result, mates, distance[0], it.bitmap, open))
-                                    // Hides the loading animation
-                                    if(loading_view.visibility == View.VISIBLE){
-                                        loading_view.visibility = View.GONE
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }*/
-            //}
         }
     }
 
@@ -676,5 +654,14 @@ open class MainActivity : AppCompatActivity(),
 
     fun getWorkmatesCount(): Int {
         return mWorkmatesFragment.getList().size
+    }
+
+    private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor {
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+        vectorDrawable?.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+        val bitmap = Bitmap.createBitmap(vectorDrawable!!.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 }
