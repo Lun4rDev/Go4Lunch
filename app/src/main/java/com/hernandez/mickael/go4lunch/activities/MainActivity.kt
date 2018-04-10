@@ -69,6 +69,8 @@ open class MainActivity : AppCompatActivity(),
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
+    val REQUEST_DELAY = .25.toLong()
+
     /** Personal Firestore document reference */
     lateinit var mDocRef : DocumentReference
 
@@ -81,7 +83,11 @@ open class MainActivity : AppCompatActivity(),
     /** Firebase user object */
     var mUser : FirebaseUser? = null
 
+    /** Workmates list */
     private var mWorkmatesList = ArrayList<Workmate>()
+
+    /** Actual restaurants count, used in tests */
+    private var mRestaurantCount = 0
 
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
@@ -278,6 +284,12 @@ open class MainActivity : AppCompatActivity(),
         // Compass button
         mMap.uiSettings.isCompassEnabled = true
 
+        // Markers buffer
+        for(m in mMarkersBuffer){
+            mMap.addMarker(m)
+        }
+        mMarkersBuffer.clear()
+
         // Marker window click listener
         mMap.setOnInfoWindowClickListener { marker ->
             if(marker.tag is String){
@@ -427,7 +439,7 @@ open class MainActivity : AppCompatActivity(),
         ApiSingleton.getInstance().details(placeId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .throttleLast(.1.toLong(), TimeUnit.SECONDS)
+                .throttleLast(REQUEST_DELAY, TimeUnit.SECONDS)
                 .subscribe(object: Observer<DetailsResponse> {
                     override fun onComplete() {}
                     override fun onSubscribe(d: Disposable) {}
@@ -447,7 +459,7 @@ open class MainActivity : AppCompatActivity(),
                                     it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
                                         val intent = Intent(applicationContext, RestaurantActivity::class.java)
                                         // TODO: Create getplacebyid by web api to get the open state
-                                        intent.putExtra("Restaurant", Restaurant(res, arrayListOf<Workmate>(), distance[0], it.bitmap, false))
+                                        intent.putExtra("Restaurant", Restaurant(res, arrayListOf<Workmate>(), distance[0], false, it.bitmap))
                                         val bStream = ByteArrayOutputStream()
                                         it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
                                         val byteArray = bStream.toByteArray()
@@ -501,8 +513,11 @@ open class MainActivity : AppCompatActivity(),
 
         // Removes all rows in list
         mListFragment.resetList()
-        // Removes all markers on map
-        mMap.clear()
+
+        if(::mMap.isInitialized){
+            // Removes all markers on map
+            mMap.clear()
+        }
 
         ApiSingleton.getInstance().textSearch(query, locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
             override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {
@@ -566,9 +581,11 @@ open class MainActivity : AppCompatActivity(),
             it.release()
         }*/
     }
+    var mMarkersBuffer = ArrayList<MarkerOptions>()
 
     /** Adds the restaurants to the Map and List fragments */
     fun addRestaurants(res: List<Result>){
+        mRestaurantCount = res.size
         for(p in res){
             //if(p.types.contains("restaurant")){
             val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
@@ -596,30 +613,36 @@ open class MainActivity : AppCompatActivity(),
                     marker.icon(bitmapDescriptorFromVector(applicationContext, R.drawable.ic_marker_green))
                 }
             }
+            if(::mMap.isInitialized){
+                val m = mMap.addMarker(marker)
+                m.tag = p.placeId
+            } else {
+                val m = mMarkersBuffer.add(marker)
+            }
 
-            val m = mMap.addMarker(marker)
-            m.tag = p.placeId
 
                 // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .throttleLast(.1.toLong(), TimeUnit.SECONDS)
+                        .throttleLast(REQUEST_DELAY, TimeUnit.SECONDS)
                         .subscribe(object: Observer<DetailsResponse> {
                             override fun onComplete() {
 
                             }
                             override fun onSubscribe(d: Disposable) {
                             }
-
                             override fun onNext(t: DetailsResponse) {
                                 val result = t.detailsResult
                                 if(result != null){
+                                    val restaurant = Restaurant(result, mates, distance[0], open)
                                     Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
                                         if (it.photoMetadata != null && it.photoMetadata.count > 0) {
                                             it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
                                                 // Add the restaurant to the list
-                                                mListFragment.addRestaurant(Restaurant(result, mates, distance[0], it.bitmap, open))
+                                                restaurant.img = it.bitmap
+                                                mListFragment.addRestaurant(restaurant)
+
                                                 // Hides the loading animation
                                                 if(loading_view.visibility == View.VISIBLE){
                                                     loading_view.visibility = View.GONE
@@ -629,11 +652,9 @@ open class MainActivity : AppCompatActivity(),
                                     }
                                 }
                             }
-
                             override fun onError(e: Throwable) {
 
                             }
-
                         })
         }
     }
@@ -649,7 +670,7 @@ open class MainActivity : AppCompatActivity(),
     }
 
     fun getRestaurantCount(): Int {
-        return mListFragment.getList().size
+        return mRestaurantCount
     }
 
     fun getWorkmatesCount(): Int {

@@ -18,11 +18,9 @@ import org.junit.Test
  */
 class ParametersActivityTest {
 
-    val testImgUrl = "https://2.bp.blogspot.com/-bD9iB6eEFNc/WXdfMahDf-I/AAAAAAAAEX0/Jr2V9cPvrJITSZkTmwt2k1PBZ_m830A5wCLcBGAs/s1600/image1.png"
+    val testImgUrl = "https://picsum.photos/400"
 
     val testUsername = "test username"
-
-    lateinit var mUid : String
 
     @Rule
     @JvmField
@@ -48,11 +46,22 @@ class ParametersActivityTest {
     /** Tests that the user name and picture url are updated */
     @Test
     fun updateUserData() {
+        // Type user name
         onView(withId(R.id.edit_name)).perform(clearText(), typeText(testUsername))
+
+        // Type image url
         onView(withId(R.id.edit_imgurl)).perform(clearText(), typeText(testImgUrl))
+
+        // Click on apply
         onView(withId(R.id.action_apply)).perform(click())
-        val res = FirebaseFirestore.getInstance().collection("users").document(mUid).get().result
-        assertEquals(res.get("displayName"), testImgUrl)
-        assertEquals(res.get("photoUrl"), testImgUrl)
+
+        // Get firestore data to compare
+        FirebaseFirestore.getInstance().collection("users").document(mActivity.mUser!!.uid).get().addOnCompleteListener {
+
+            // Assert the data exists and is equal to the one entered
+            assertTrue(it.result.exists())
+            assertEquals(it.result.get("displayName"), testUsername)
+            assertEquals(it.result.get("photoUrl"), testImgUrl)
+        }
     }
 }

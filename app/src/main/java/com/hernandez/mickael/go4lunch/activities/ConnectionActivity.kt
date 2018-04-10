@@ -70,6 +70,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         mAuth = FirebaseAuth.getInstance()
         if(mAuth.currentUser != null){
             startMainActivity()
+            return
         }
 
         // Inflates the layout
@@ -166,8 +167,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     override fun onDialogPositiveClick(dialog: DialogFragment, email:String, password:String) {
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if(it.isSuccessful){
+                // If authentication succeeds
                 startMainActivity()
             } else {
+                // If auth fails, try to create the account
                 mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
                     if(it.isSuccessful){
                         startMainActivity()

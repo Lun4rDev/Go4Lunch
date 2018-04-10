@@ -39,14 +39,12 @@
                     android:id="@+id/text_user_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mickal Hrnandz"
                     android:textSize="18sp"/>
 
                 <TextView
                     android:id="@+id/text_user_mail"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="mick@gmail.com"/>
+                    android:layout_height="wrap_content" />
             </LinearLayout>
         </LinearLayout>
 </LinearLayout>
