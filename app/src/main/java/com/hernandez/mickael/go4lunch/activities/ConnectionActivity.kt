@@ -54,6 +54,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
+
         // Catches GitHub auth intent
         val uri = intent.data
         if(uri != null && uri.toString().startsWith(getString(R.string.github_app_url))){
@@ -73,8 +76,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             return
         }
 
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -116,7 +117,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         // Twitter sign-in button
         btn_twitter.callback = object : Callback<TwitterSession>() {
             override fun success(result: Result<TwitterSession>) {
-                Log.d(TAG, "twitterLogin:success" + result)
+                Log.d(TAG, "twitterLogin:success$result")
                 signInTwitter(result.data)
             }
             override fun failure(exception: TwitterException) {
@@ -289,7 +290,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         super.onActivityResult(requestCode, resultCode, data)
         when(requestCode){
             RC_LOGOUT -> {
-                mGoogleSignInClient.signOut()
+                if(::mGoogleSignInClient.isInitialized){
+                    mGoogleSignInClient.signOut()
+                }
                 FirebaseAuth.getInstance().signOut()
                 FacebookSdk.clearLoggingBehaviors()
             }
@@ -306,8 +309,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
         }
         if(FacebookSdk.isFacebookRequestCode(requestCode) && resultCode == RESULT_OK){
-            mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
-            startMainActivity()
+            if(::mFbCallbackManager.isInitialized){
+                mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
+                startMainActivity()
+            }
         }
 
     }

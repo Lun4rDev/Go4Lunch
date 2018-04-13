@@ -81,4 +81,7 @@ public class ApiSingleton {
                 .build();
     }
 
+    public static String getUrlFromPhotoReference(String url){
+        return ApiInterface.PHOTO_BASE_URL + url + "&key=" + ApiInterface.API_KEY;
+    }
 }

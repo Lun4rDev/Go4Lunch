@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
@@ -22,6 +23,12 @@ import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.request.FutureTarget
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.animation.GlideAnimation
+import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.target.Target
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -34,13 +41,17 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
+import com.hernandez.mickael.go4lunch.api.ApiInterface
 import com.hernandez.mickael.go4lunch.api.ApiSingleton
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
@@ -58,6 +69,11 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOError
+import java.io.IOException
+import java.lang.Exception
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 
@@ -222,11 +238,12 @@ open class MainActivity : AppCompatActivity(),
         // Fill UI with Firebase user data
         mUser = FirebaseAuth.getInstance().currentUser
         if(mUser != null && mUser?.uid != null){
-            val navView = findViewById<NavigationView>(R.id.nav_view)
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-            Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
+            fillDrawerHeader()
+
+            // Initiate user document reference
             mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+
+            // Get workmates from the database
             mColRef.addSnapshotListener { colSnapshot, _ ->
                     if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                         for(doc in colSnapshot.documents){
@@ -240,7 +257,16 @@ open class MainActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         mMapFragment.getMapAsync(this)
+        fillDrawerHeader()
         updateFirestoreData()
+    }
+
+    /** Fills the drawer header with data from the user */
+    private fun fillDrawerHeader(){
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
+        Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
     }
 
     /** Sends Firebase user data to the Firestore database */
@@ -520,67 +546,16 @@ open class MainActivity : AppCompatActivity(),
         }
 
         ApiSingleton.getInstance().textSearch(query, locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
-            override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {
-
-            }
-
+            override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {}
             override fun onResponse(call: Call<SearchResponse>?, response: Response<SearchResponse>?) {
                 val res = response?.body()?.results
                 if(res != null){
                     addRestaurants(res)
                 }
             }
-
         })
-
-        // Restaurants filter
-        /*val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
-
-        // Places Autocomplete result
-        val result = Places.GeoDataApi.getAutocompletePredictions(
-                mGoogleApiClient, query, toBounds(mLastKnownLocation, 1.0), filter)
-        result.setResultCallback {
-            it.forEach {
-                Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
-                    if(it.count > 0){
-                        // Restaurant object init
-                        val place = it[0]
-                        // Distance between last location and restaurant
-                        val distance = floatArrayOf(0f)
-                        Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
-                                mLastKnownLocation.latitude, mLastKnownLocation.longitude,
-                                distance)
-
-                        // Map marker
-                        val marker = MarkerOptions()
-                        marker.position(place.latLng)
-                        marker.title(place.name.toString())
-                        marker.snippet(place.address.toString())
-                        marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                        mMap.addMarker(marker)
-
-                        // Get photo
-                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
-                            if(it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-
-                                   // Add the restaurant to the list
-                                    mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap))
-
-                                    // Hides the loading animation
-                                    if(loading_view.visibility == View.VISIBLE){
-                                        loading_view.visibility = View.GONE
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-                }
-            }
-            it.release()
-        }*/
     }
+
     var mMarkersBuffer = ArrayList<MarkerOptions>()
 
     /** Adds the restaurants to the Map and List fragments */
@@ -617,9 +592,8 @@ open class MainActivity : AppCompatActivity(),
                 val m = mMap.addMarker(marker)
                 m.tag = p.placeId
             } else {
-                val m = mMarkersBuffer.add(marker)
+                mMarkersBuffer.add(marker)
             }
-
 
                 // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
@@ -636,22 +610,55 @@ open class MainActivity : AppCompatActivity(),
                                 val result = t.detailsResult
                                 if(result != null){
                                     val restaurant = Restaurant(result, mates, distance[0], open)
-                                    Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
-                                        if (it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                            it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                                // Add the restaurant to the list
-                                                restaurant.img = it.bitmap
-                                                mListFragment.addRestaurant(restaurant)
+                                    /*if(!result.photos.isEmpty()){
 
-                                                // Hides the loading animation
-                                                if(loading_view.visibility == View.VISIBLE){
-                                                    loading_view.visibility = View.GONE
+                                            val bmp = Glide.with(applicationContext)
+                                                    .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
+                                                    .asBitmap()
+                                                    .centerCrop()
+                                                    .into(200, 200)
+                                                    .get()
+                                            restaurant.img = bmp
+                                            mListFragment.addRestaurant(restaurant)
+                                            // Hides the loading animation
+                                            if(loading_view.visibility == View.VISIBLE){
+                                                loading_view.visibility = View.GONE
+                                            }
+                                        val bmp = Glide.with(applicationContext)
+                                                .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
+                                                .asBitmap()
+                                                .centerCrop()
+                                                .into(200, 200)
+                                                .get()
+
+                                                .into(object : Target<Bitmap>(300, 300){
+                                                    override fun onResourceReady(resource: Bitmap?, glideAnimation: GlideAnimation<in Bitmap>?) {
+                                                        restaurant.img = resource
+                                                        mListFragment.addRestaurant(restaurant)
+                                                        // Hides the loading animation
+                                                        if(loading_view.visibility == View.VISIBLE){
+                                                            loading_view.visibility = View.GONE
+                                                        }
+                                                    }
+
+                                                })
+                                    } else {*/
+                                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
+                                            if (it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                                    // Add the restaurant to the list
+                                                    restaurant.img = it.bitmap
+                                                    mListFragment.addRestaurant(restaurant)
+
+                                                    // Hides the loading animation
+                                                    if(loading_view.visibility == View.VISIBLE){
+                                                        loading_view.visibility = View.GONE
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
                             override fun onError(e: Throwable) {
 
                             }

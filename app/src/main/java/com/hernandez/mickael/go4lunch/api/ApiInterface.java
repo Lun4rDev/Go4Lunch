@@ -20,6 +20,9 @@ public interface ApiInterface {
     /** API base URL */
     String API_BASE_URL = "https://maps.googleapis.com/maps/api/place/";
 
+    /** Places Photos base URL */
+    String PHOTO_BASE_URL = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=";
+
     /** Nearby Search API call */
     @GET("nearbysearch/json")
     Call<SearchResponse> nearbySearch(
