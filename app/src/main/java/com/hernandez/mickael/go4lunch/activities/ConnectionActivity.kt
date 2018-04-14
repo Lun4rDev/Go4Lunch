@@ -89,8 +89,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
         // Google sign-in button
         btn_google.setOnClickListener {
-            val signInIntent = mGoogleSignInClient.signInIntent
-            startActivityForResult(signInIntent, RC_GOOGLE)
+            startActivityForResult(mGoogleSignInClient.signInIntent, RC_GOOGLE)
         }
 
         // Facebook sign-in button

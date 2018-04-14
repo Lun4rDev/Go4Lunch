@@ -43,6 +43,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
@@ -236,20 +237,22 @@ open class MainActivity : AppCompatActivity(),
         searchView.setOnQueryTextListener(this)
 
         // Fill UI with Firebase user data
-        mUser = FirebaseAuth.getInstance().currentUser
-        if(mUser != null && mUser?.uid != null){
-            fillDrawerHeader()
+        FirebaseAuth.getInstance().addAuthStateListener {
+            mUser = FirebaseAuth.getInstance().currentUser
+            if(mUser != null && mUser?.uid != null){
+                fillDrawerHeader()
 
-            // Initiate user document reference
-            mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+                // Initiate user document reference
+                mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
-            // Get workmates from the database
-            mColRef.addSnapshotListener { colSnapshot, _ ->
+                // Get workmates from the database
+                mColRef.addSnapshotListener { colSnapshot, _ ->
                     if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                         for(doc in colSnapshot.documents){
                             mWorkmatesList.add(doc.toObject(Workmate::class.java))
                         }
                     }
+                }
             }
         }
     }
