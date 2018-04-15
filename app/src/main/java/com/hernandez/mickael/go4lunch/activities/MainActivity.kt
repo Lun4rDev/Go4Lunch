@@ -49,6 +49,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
@@ -148,6 +149,7 @@ open class MainActivity : AppCompatActivity(),
     /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
         // Limiting the offscreen page limit of the viewpager
@@ -235,7 +237,10 @@ open class MainActivity : AppCompatActivity(),
 
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
+    }
 
+    override fun onStart() {
+        super.onStart()
         // Fill UI with Firebase user data
         FirebaseAuth.getInstance().addAuthStateListener {
             mUser = FirebaseAuth.getInstance().currentUser
@@ -257,6 +262,7 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
+
     override fun onResume() {
         super.onResume()
         mMapFragment.getMapAsync(this)
@@ -269,21 +275,25 @@ open class MainActivity : AppCompatActivity(),
         val navView = findViewById<NavigationView>(R.id.nav_view)
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-        Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
+        Glide.with(applicationContext).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
     }
 
     /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
         if(::mDocRef.isInitialized){
-            mDocRef.addSnapshotListener { snapshot, _ ->
-                if(snapshot != null && snapshot.exists()){
-                    val hMap = HashMap<String, Any>()
-                    if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
-                    if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
-                    if(!snapshot.contains("photoUrl")) hMap["photoUrl"] = mUser!!.photoUrl.toString()
-                    mDocRef.update(hMap)
-                }
+            val hMap = HashMap<String, Any>()
+            hMap["uid"] = mUser!!.uid
+            if(mUser!!.displayName != null){
+                hMap["displayName"] = mUser!!.displayName.toString()
+            } else {
+                hMap["displayName"] = mUser!!.email!!.substring(0, mUser!!.email!!.indexOf('@'))
             }
+            if(mUser!!.photoUrl != null){
+                hMap["photoUrl"] = mUser!!.photoUrl.toString()
+            } else {
+                hMap["photoUrl"] = "https://picsum.photos/" + ((300 * Math.random()).toInt() + 300) // random profile picture if missing
+            }
+            mDocRef.set(hMap, SetOptions.merge())
         }
     }
 
@@ -420,7 +430,7 @@ open class MainActivity : AppCompatActivity(),
                     mDocRef.get().addOnCompleteListener {
                         if(it.isSuccessful && it.result.exists()){
                             val id = it.result.getString("restaurantId")
-                            if(id != "") {
+                            if(id != null && id != "") {
                                 displayRestaurant(id)
                             } else {
                                 Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()

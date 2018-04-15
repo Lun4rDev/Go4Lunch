@@ -280,9 +280,14 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     /** Start MainActivity for result */
     private fun startMainActivity(){
-        val intent = Intent(applicationContext, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        startActivityForResult(intent, RC_LOGOUT)
+        if(FirebaseAuth.getInstance().currentUser != null){
+            val intent = Intent(applicationContext, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivityForResult(intent, RC_LOGOUT)
+        } else {
+            // If user is signed in but not in Firebase Auth, recreate to recover the token correctly
+            this.recreate()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -293,11 +298,12 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                     mGoogleSignInClient.signOut()
                 }
                 FirebaseAuth.getInstance().signOut()
-                FacebookSdk.clearLoggingBehaviors()
+                //FacebookSdk.clearLoggingBehaviors()
             }
             RC_GOOGLE -> {
                 if (resultCode == RESULT_OK) {
-                    startMainActivity()
+                    val user = FirebaseAuth.getInstance().currentUser
+                        startMainActivity()
                 } else {
                     // Sign in failed, check response for error code
                     Toast.makeText(applicationContext, getString(R.string.connectionfail), Toast.LENGTH_SHORT).show()
