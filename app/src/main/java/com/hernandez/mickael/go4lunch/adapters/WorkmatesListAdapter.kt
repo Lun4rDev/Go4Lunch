@@ -23,11 +23,12 @@ import kotlinx.android.synthetic.main.row_workmate.view.*
 
 /** Custom adapter for the workmates RecyclerView */
 open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList<Workmate>) : RecyclerView.Adapter<WorkmatesListAdapter.ViewHolder>() {
+
     private var mContext = context
     private var mResource = resource
     private var mList = list
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): WorkmatesListAdapter.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent!!.context)
                 .inflate(R.layout.row_workmate, parent, false)
         return ViewHolder(view)

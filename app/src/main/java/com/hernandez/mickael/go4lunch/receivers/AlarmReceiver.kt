@@ -29,9 +29,9 @@ class AlarmReceiver: BroadcastReceiver() {
         // Intent opened by the click on notification
         val pI = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), 0)
 
-        var uid = FirebaseAuth.getInstance().uid!!
+        val uid = FirebaseAuth.getInstance().currentUser!!.uid
         var placeSelected = false
-        var placeName = ""
+        var placeName: String
         var matesCount = 0
 
         mDocRef = mColRef.document(uid)
@@ -58,28 +58,35 @@ class AlarmReceiver: BroadcastReceiver() {
 
 
         // User firestore document
-        mDocRef.addSnapshotListener { snapshot, firestoreException ->
-            // if a restaurant is selected
-            if(snapshot.contains("restaurantName") && snapshot.getString("restaurantName") != ""){
-                placeSelected = true
-                placeName = snapshot.getString("restaurantName")
-                // search in every user document for workmates going to the same place
-                mColRef.addSnapshotListener { pSnapshot, pFirestoreException ->
-                    if(!pSnapshot.isEmpty){
-                        pSnapshot.forEach {
-                            if(it.getString("restaurantName") == placeName && it.getString("uid") != uid){
-                                matesCount++
+        mDocRef.get().addOnCompleteListener {
+            if(it.isSuccessful && it.result != null){
+                // if a restaurant is selected
+                if(it.result.contains("restaurantName") && it.result.getString("restaurantName") != ""){
+                    placeSelected = true
+                    placeName = it.result.getString("restaurantName")
+                    // search in every user document for workmates going to the same place
+                    mColRef.addSnapshotListener { pSnapshot, _ ->
+                        if(!pSnapshot.isEmpty){
+                            // Keeping count value, then recounting and comparing to know if it should notify
+                            var matesCountTemp = matesCount
+                            matesCount = 0
+                            pSnapshot.forEach {
+                                if(it.getString("restaurantName") == placeName && it.getString("uid") != uid){
+                                    matesCount++
+                                }
+                            }
+                            if(matesCount != matesCountTemp){
+                                // Notifies
+                                mBuilder.setContentText(context.getString(R.string.notification_text, placeName, matesCount))
+                                mNotificationManager.notify(0, mBuilder.build())
                             }
                         }
                     }
+                } else {
                     // Notifies
-                    mBuilder.setContentText(context.getString(R.string.notification_text, placeName, matesCount))
+                    mBuilder.setContentText(context.getString(R.string.no_restaurant_selected))
                     mNotificationManager.notify(0, mBuilder.build())
                 }
-            } else {
-                // Notifies
-                mBuilder.setContentText(context.getString(R.string.no_restaurant_selected))
-                mNotificationManager.notify(0, mBuilder.build())
             }
         }
     }

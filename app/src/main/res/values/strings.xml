@@ -5,7 +5,8 @@
 
     <!-- Google strings -->
     <string name="places_api_key" translatable="false">AIzaSyCLx5WO9P9hWujgs4CiEEmywSzWX7x97hM</string>
-    <string name="google_web_client_id" translatable="false">85975384709–1p2rka40di3v2q26i7mfj3q67dn6226c.apps.googleusercontent.com</string>
+    <string name="places_web_services_api_key" translatable="false">AIzaSyClssA-rx1d2Wip2KBO25PQMQqAuM5IL0o</string>
+    <string name="google_web_client_id" translatable="false">85975384709-li2l7j9tka4n65rhns737143njetjgkj.apps.googleusercontent.com</string>
 
     <!-- Facebook consumer key and secret -->
     <string name="facebook_application_id" translatable="false">1167955320007971</string>
@@ -73,4 +74,7 @@
     <string name="changes_success">Changes have been saved successfully.</string>
     <string name="display_name">Name :</string>
     <string name="picture_url">Picture URL :</string>
+    <string name="open">open</string>
+    <string name="closed">closed</string>
+    <string name="params_missing">One of the parameters is missing.</string>
 </resources>

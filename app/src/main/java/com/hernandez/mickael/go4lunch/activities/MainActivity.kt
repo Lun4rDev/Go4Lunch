@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
@@ -21,11 +23,16 @@ import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.request.FutureTarget
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.animation.GlideAnimation
+import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.target.Target
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.places.AutocompleteFilter
 import com.google.android.gms.location.places.GeoDataClient
 import com.google.android.gms.location.places.PlaceDetectionClient
 import com.google.android.gms.location.places.Places
@@ -34,19 +41,42 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.maps.android.SphericalUtil
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.BottomBarAdapter
+import com.hernandez.mickael.go4lunch.api.ApiInterface
+import com.hernandez.mickael.go4lunch.api.ApiSingleton
 import com.hernandez.mickael.go4lunch.fragments.ListFragment
 import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
+import com.hernandez.mickael.go4lunch.model.details.DetailsResponse
+import com.hernandez.mickael.go4lunch.model.search.Result
+import com.hernandez.mickael.go4lunch.model.search.SearchResponse
+import io.reactivex.Observer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOError
+import java.io.IOException
+import java.lang.Exception
+import java.net.URL
+import java.util.concurrent.TimeUnit
 
 
 open class MainActivity : AppCompatActivity(),
@@ -54,14 +84,10 @@ open class MainActivity : AppCompatActivity(),
         OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener,
         SearchView.OnQueryTextListener {
-    /** Sign-in intent code */
-    val RC_SIGN_IN = 123
-
-    val RC_LOGOUT = 456
-
-    val RC_SELECT = 789
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
+
+    val REQUEST_DELAY = .25.toLong()
 
     /** Personal Firestore document reference */
     lateinit var mDocRef : DocumentReference
@@ -75,18 +101,22 @@ open class MainActivity : AppCompatActivity(),
     /** Firebase user object */
     var mUser : FirebaseUser? = null
 
+    /** Workmates list */
+    private var mWorkmatesList = ArrayList<Workmate>()
+
+    /** Actual restaurants count, used in tests */
+    private var mRestaurantCount = 0
+
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
-
-    /** Map fragment */
-    private var mMapFragment = SupportMapFragment()
-    //private lateinit var mMapFragment: SupportMapFragment
 
     /** Google Map object */
     private lateinit var mMap : GoogleMap
 
+    /** Permission state */
     private var mLocationPermissionGranted = false
 
+    /** Google APIs clients */
     private lateinit var mGoogleApiClient: GoogleApiClient
 
     private lateinit var mGeoDataClient: GeoDataClient
@@ -95,23 +125,34 @@ open class MainActivity : AppCompatActivity(),
 
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
+    /** User last known location */
     private var mLastKnownLocation = Location("")
 
+    /** Default GoogleMap zoom value */
     private val DEFAULT_ZOOM = 16f
 
+    /** Default user location */
     private var mDefaultLocation = LatLng(.0, .0)
 
+    /** Radius in meters used in Nearby Places detection */
+    private var mRadius = 10000
+
+    /** Map fragment */
+    private var mMapFragment = SupportMapFragment()
+
+    /** Restaurants list fragment */
     private val mListFragment = ListFragment()
 
-    //private val mWorkmatesList = ArrayList<Workmate>()
-
+    /**Workmates list fragment */
     private val mWorkmatesFragment = WorkmatesFragment()
 
     /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
+        // Limiting the offscreen page limit of the viewpager
         viewPager.offscreenPageLimit = 3
 
         // Shared Preferences
@@ -125,7 +166,6 @@ open class MainActivity : AppCompatActivity(),
                 .enableAutoManage(this, this)
                 .build()
         mGoogleApiClient.connect()
-
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null)
@@ -194,47 +234,27 @@ open class MainActivity : AppCompatActivity(),
         // Toolbar search item and view
         val si = toolbar.menu.findItem(R.id.search_item)
         val searchView = si.actionView as SearchView
-        /*val searchText = searchView.findViewById<EditText>(android.support.v7.appcompat.R.id.search_src_text)
-        searchText.setTextColor(Color.WHITE)
-        searchText.setHintTextColor(Color.WHITE)*/
+
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
-
-        // Fill UI with Firebase user data
-        mUser = FirebaseAuth.getInstance().currentUser
-        if(mUser != null && mUser?.uid != null){
-            val navView = findViewById<NavigationView>(R.id.nav_view)
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
-            navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-            Glide.with(this).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
-            mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
-        }
     }
 
-    /** Displays restaurant according to its id */
-    fun displayRestaurant(placeId: String){
-        Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId).setResultCallback {
-            if(it.count > 0){
-                // Restaurant object init
-                val place = it[0]
+    override fun onStart() {
+        super.onStart()
+        // Fill UI with Firebase user data
+        FirebaseAuth.getInstance().addAuthStateListener {
+            mUser = FirebaseAuth.getInstance().currentUser
+            if(mUser != null && mUser?.uid != null){
+                fillDrawerHeader()
 
-                // Distance between last location and restaurant
-                val distance = floatArrayOf(0f)
-                Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
-                        mLastKnownLocation.latitude, mLastKnownLocation.longitude,
-                        distance)
+                // Initiate user document reference
+                mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
-                // Get photo
-                Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
-                    if(it.photoMetadata != null && it.photoMetadata.count > 0) {
-                        it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                            val intent = Intent(applicationContext, RestaurantActivity::class.java)
-                            intent.putExtra("Restaurant", Restaurant(place, arrayListOf(), distance[0], it.bitmap))
-                            val bStream = ByteArrayOutputStream()
-                            it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
-                            val byteArray = bStream.toByteArray()
-                            intent.putExtra("Image", byteArray)
-                            startActivity(intent)
+                // Get workmates from the database
+                mColRef.addSnapshotListener { colSnapshot, _ ->
+                    if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
+                        for(doc in colSnapshot.documents){
+                            mWorkmatesList.add(doc.toObject(Workmate::class.java))
                         }
                     }
                 }
@@ -242,24 +262,38 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
+
     override fun onResume() {
         super.onResume()
         mMapFragment.getMapAsync(this)
+        fillDrawerHeader()
         updateFirestoreData()
+    }
+
+    /** Fills the drawer header with data from the user */
+    private fun fillDrawerHeader(){
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
+        Glide.with(applicationContext).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
     }
 
     /** Sends Firebase user data to the Firestore database */
     private fun updateFirestoreData(){
         if(::mDocRef.isInitialized){
-            mDocRef.addSnapshotListener { snapshot, firestoreException ->
-                if(snapshot != null && snapshot.exists()){
-                    val hMap = HashMap<String, Any>()
-                    if(!snapshot.contains("uid")) hMap["uid"] = mUser!!.uid
-                    if(!snapshot.contains("displayName")) hMap["displayName"] = mUser!!.displayName.toString()
-                    if(!snapshot.contains("photoUrl")) hMap["photoUrl"] = mUser!!.photoUrl.toString()
-                    mDocRef.update(hMap)
-                }
+            val hMap = HashMap<String, Any>()
+            hMap["uid"] = mUser!!.uid
+            if(mUser!!.displayName != null){
+                hMap["displayName"] = mUser!!.displayName.toString()
+            } else {
+                hMap["displayName"] = mUser!!.email!!.substring(0, mUser!!.email!!.indexOf('@'))
             }
+            if(mUser!!.photoUrl != null){
+                hMap["photoUrl"] = mUser!!.photoUrl.toString()
+            } else {
+                hMap["photoUrl"] = "https://picsum.photos/" + ((300 * Math.random()).toInt() + 300) // random profile picture if missing
+            }
+            mDocRef.set(hMap, SetOptions.merge())
         }
     }
 
@@ -280,13 +314,6 @@ open class MainActivity : AppCompatActivity(),
             mMap.isMyLocationEnabled = true
         }
 
-        if(markerBuffer.size > 0){
-            for (m in markerBuffer){
-                mMap.addMarker(m)
-            }
-            markerBuffer.clear()
-        }
-
         // Location button
         mMap.uiSettings.isMyLocationButtonEnabled = true
 
@@ -296,18 +323,24 @@ open class MainActivity : AppCompatActivity(),
         // Compass button
         mMap.uiSettings.isCompassEnabled = true
 
+        // Markers buffer
+        for(m in mMarkersBuffer){
+            mMap.addMarker(m)
+        }
+        mMarkersBuffer.clear()
+
         // Marker window click listener
         mMap.setOnInfoWindowClickListener { marker ->
-            val res = mListFragment.getList().firstOrNull {
+            if(marker.tag is String){
+                displayRestaurant(marker.tag.toString())
+            }
+            /*val res = mListFragment.getList().firstOrNull {
                 it.name == marker.title
             }
             if(res != null){
                 displayRestaurant(res.id)
-            }
-            true
+            }*/
         }
-
-        searchRestaurants("restaurant")
     }
 
     /** Get permission to access device location */
@@ -364,6 +397,9 @@ open class MainActivity : AppCompatActivity(),
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                                 LatLng(mLastKnownLocation.latitude,
                                         mLastKnownLocation.longitude), DEFAULT_ZOOM))
+                        if(mListFragment.getList().size <= 0){
+                            nearbyRestaurants()
+                        }
                     } else {
                         //Log.d(TAG, "Current location is null. Using defaults.")
                         //Log.e(TAG, "Exception: %s", task.getException())
@@ -390,16 +426,18 @@ open class MainActivity : AppCompatActivity(),
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
             R.id.item_lunch -> {
-                mDocRef.get().addOnCompleteListener {
-                    if(it.isSuccessful){
-                        val id = it.result.getString("restaurantId")
-                        if(it.result.exists() && id != "") {
-                            displayRestaurant(id)
+                if(::mDocRef.isInitialized){
+                    mDocRef.get().addOnCompleteListener {
+                        if(it.isSuccessful && it.result.exists()){
+                            val id = it.result.getString("restaurantId")
+                            if(id != null && id != "") {
+                                displayRestaurant(id)
+                            } else {
+                                Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()
+                            }
                         } else {
-                            Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(applicationContext, getString(R.string.error_occurred), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -416,7 +454,6 @@ open class MainActivity : AppCompatActivity(),
         return true
     }
 
-
     /** Prevents user from going back to ConnectionActivity */
     override fun onBackPressed() {
         if(drawer_layout.isDrawerOpen(GravityCompat.START)){
@@ -429,10 +466,62 @@ open class MainActivity : AppCompatActivity(),
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    private var markerBuffer = ArrayList<MarkerOptions>()
+    private fun locToStr(loc: Location): String {
+        return "${loc.latitude}, ${loc.longitude}"
+    }
 
-    /** Use Google Places API to find nearby restaurants according to the query string */
-    private fun searchRestaurants(query: String?){
+    /** Displays restaurant according to its id */
+    fun displayRestaurant(placeId: String){
+        // Shows the loading animation
+        loading_view.visibility = View.VISIBLE
+
+        ApiSingleton.getInstance().details(placeId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .throttleLast(REQUEST_DELAY, TimeUnit.SECONDS)
+                .subscribe(object: Observer<DetailsResponse> {
+                    override fun onComplete() {}
+                    override fun onSubscribe(d: Disposable) {}
+                    override fun onNext(t: DetailsResponse) {
+                        // object init
+                        val res = t.detailsResult
+                        if (res != null) {
+                            // Distance between last location and restaurant
+                            val distance = floatArrayOf(0f)
+                            Location.distanceBetween(res.geometry.location.lat, res.geometry.location.lng,
+                                    mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                                    distance)
+
+                            // Get photo
+                            Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, res.placeId).setResultCallback {
+                                if (it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                    it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                        val intent = Intent(applicationContext, RestaurantActivity::class.java)
+                                        // TODO: Create getplacebyid by web api to get the open state
+                                        intent.putExtra("Restaurant", Restaurant(res, arrayListOf<Workmate>(), distance[0], false, it.bitmap))
+                                        val bStream = ByteArrayOutputStream()
+                                        it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
+                                        val byteArray = bStream.toByteArray()
+                                        intent.putExtra("Image", byteArray)
+
+                                        // Hides the loading animation
+                                        loading_view.visibility = View.GONE
+
+                                        startActivity(intent)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    override fun onError(e: Throwable) {
+                        loading_view.visibility = View.GONE
+                    }
+
+                })
+    }
+
+    /** Use Google Places APIs to find nearby restaurants */
+    private fun nearbyRestaurants(){
         // Shows the loading animation
 
         loading_view.visibility = View.VISIBLE
@@ -440,69 +529,153 @@ open class MainActivity : AppCompatActivity(),
         mListFragment.resetList()
         // Removes all markers on map
         mMap.clear()
-        // Restaurants filter
-        val filter = AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build()
 
-        // Places Autocomplete result
-        val result = Places.GeoDataApi.getAutocompletePredictions(
-                mGoogleApiClient, query, toBounds(mLastKnownLocation, 1.0), filter)
-        result.setResultCallback {
-            it.forEach {
-                Places.GeoDataApi.getPlaceById(mGoogleApiClient, it.placeId).setResultCallback {
-                    if(it.count > 0){
-                        // Restaurant object init
-                        val place = it[0]
-                        // Distance between last location and restaurant
-                        val distance = floatArrayOf(0f)
-                        Location.distanceBetween(place.latLng.latitude, place.latLng.longitude,
-                                mLastKnownLocation.latitude, mLastKnownLocation.longitude,
-                                distance)
+        ApiSingleton.getInstance().nearbySearch(locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
+            override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {
+            }
 
-                        // Map marker
-                        val marker = MarkerOptions()
-                        marker.position(place.latLng)
-                        marker.title(place.name.toString())
-                        marker.snippet(place.address.toString())
-                        marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker))
-                        mMap.addMarker(marker)
-                        /*if(::mMap.isInitialized){
-                        } else {
-                            markerBuffer.add(marker)
-                        }*/
-
-                        val mates = ArrayList<Workmate>()
-                        mColRef.addSnapshotListener { colSnapshot, p1 ->
-                            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
-                                for(doc in colSnapshot.documents){
-                                    if(doc.get("restaurantId") == place.id){
-                                        mates.add(doc.toObject(Workmate::class.java))
-                                    }
-                                }
-                                if(mates.count() > 0){
-                                    marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_green))
-                                }
-                            }
-                        }
-                        // Get photo
-                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, place.id).setResultCallback {
-                            if(it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-
-                                   // Add the restaurant to the list
-                                    mListFragment.addRestaurant(Restaurant(place, mates, distance[0], it.bitmap))
-
-                                    // Hides the loading animation
-                                    if(loading_view.visibility == View.VISIBLE){
-                                        loading_view.visibility = View.GONE
-                                    }
-                                }
-                            }
-                        }
-
-                    }
+            override fun onResponse(call: Call<SearchResponse>?, response: Response<SearchResponse>?) {
+                val res = response?.body()?.results
+                if(res != null){
+                    addRestaurants(res)
                 }
             }
-            it.release()
+
+        })
+    }
+
+    /** Use Google Places APIs to find nearby restaurants according to the query string */
+    private fun searchRestaurants(query: String?){
+
+        // Shows the loading animation
+        loading_view.visibility = View.VISIBLE
+
+        // Removes all rows in list
+        mListFragment.resetList()
+
+        if(::mMap.isInitialized){
+            // Removes all markers on map
+            mMap.clear()
+        }
+
+        ApiSingleton.getInstance().textSearch(query, locToStr(mLastKnownLocation), mRadius).enqueue(object: Callback<SearchResponse>{
+            override fun onFailure(call: Call<SearchResponse>?, t: Throwable?) {}
+            override fun onResponse(call: Call<SearchResponse>?, response: Response<SearchResponse>?) {
+                val res = response?.body()?.results
+                if(res != null){
+                    addRestaurants(res)
+                }
+            }
+        })
+    }
+
+    var mMarkersBuffer = ArrayList<MarkerOptions>()
+
+    /** Adds the restaurants to the Map and List fragments */
+    fun addRestaurants(res: List<Result>){
+        mRestaurantCount = res.size
+        for(p in res){
+            //if(p.types.contains("restaurant")){
+            val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
+            // Distance between last location and restaurant
+            val distance = floatArrayOf(0f)
+            Location.distanceBetween(p.geometry.location.lat, p.geometry.location.lng,
+                        mLastKnownLocation.latitude, mLastKnownLocation.longitude,
+                        distance)
+
+            // Map marker
+            val marker = MarkerOptions()
+            marker.position(LatLng(p.geometry.location.lat, p.geometry.location.lng))
+            marker.title(p.name.toString())
+            marker.snippet(p.vicinity?.toString())
+            marker.icon(bitmapDescriptorFromVector(applicationContext, R.drawable.ic_marker))
+
+            val mates = ArrayList<Workmate>()
+            if(mWorkmatesList.size > 0){
+                for(wm in mWorkmatesList){
+                    if(wm.restaurantId == p.placeId && wm.uid != mUser?.uid){
+                        mates.add(wm)
+                    }
+                }
+                if(mates.size > 0){
+                    marker.icon(bitmapDescriptorFromVector(applicationContext, R.drawable.ic_marker_green))
+                }
+            }
+            if(::mMap.isInitialized){
+                val m = mMap.addMarker(marker)
+                m.tag = p.placeId
+            } else {
+                mMarkersBuffer.add(marker)
+            }
+
+                // Details API call throttled with RxJava
+                ApiSingleton.getInstance().details(p.placeId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .throttleLast(REQUEST_DELAY, TimeUnit.SECONDS)
+                        .subscribe(object: Observer<DetailsResponse> {
+                            override fun onComplete() {
+
+                            }
+                            override fun onSubscribe(d: Disposable) {
+                            }
+                            override fun onNext(t: DetailsResponse) {
+                                val result = t.detailsResult
+                                if(result != null){
+                                    val restaurant = Restaurant(result, mates, distance[0], open)
+                                    /*if(!result.photos.isEmpty()){
+
+                                            val bmp = Glide.with(applicationContext)
+                                                    .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
+                                                    .asBitmap()
+                                                    .centerCrop()
+                                                    .into(200, 200)
+                                                    .get()
+                                            restaurant.img = bmp
+                                            mListFragment.addRestaurant(restaurant)
+                                            // Hides the loading animation
+                                            if(loading_view.visibility == View.VISIBLE){
+                                                loading_view.visibility = View.GONE
+                                            }
+                                        val bmp = Glide.with(applicationContext)
+                                                .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
+                                                .asBitmap()
+                                                .centerCrop()
+                                                .into(200, 200)
+                                                .get()
+
+                                                .into(object : Target<Bitmap>(300, 300){
+                                                    override fun onResourceReady(resource: Bitmap?, glideAnimation: GlideAnimation<in Bitmap>?) {
+                                                        restaurant.img = resource
+                                                        mListFragment.addRestaurant(restaurant)
+                                                        // Hides the loading animation
+                                                        if(loading_view.visibility == View.VISIBLE){
+                                                            loading_view.visibility = View.GONE
+                                                        }
+                                                    }
+
+                                                })
+                                    } else {*/
+                                        Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
+                                            if (it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                                it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                                    // Add the restaurant to the list
+                                                    restaurant.img = it.bitmap
+                                                    mListFragment.addRestaurant(restaurant)
+
+                                                    // Hides the loading animation
+                                                    if(loading_view.visibility == View.VISIBLE){
+                                                        loading_view.visibility = View.GONE
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            override fun onError(e: Throwable) {
+
+                            }
+                        })
         }
     }
 
@@ -517,11 +690,19 @@ open class MainActivity : AppCompatActivity(),
     }
 
     fun getRestaurantCount(): Int {
-        return mListFragment.getList().size
+        return mRestaurantCount
     }
 
     fun getWorkmatesCount(): Int {
         return mWorkmatesFragment.getList().size
     }
 
+    private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor {
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+        vectorDrawable?.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+        val bitmap = Bitmap.createBitmap(vectorDrawable!!.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
 }

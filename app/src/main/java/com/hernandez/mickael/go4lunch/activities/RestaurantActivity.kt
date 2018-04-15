@@ -72,7 +72,7 @@ class RestaurantActivity : AppCompatActivity() {
         list_workmates.emptyView = text_empty
 
         // Getting workmates joining this restaurant from Firestore
-        mColRef.addSnapshotListener { colSnapshot, p1 ->
+        mColRef.addSnapshotListener { colSnapshot, _ ->
             if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                 val res = ArrayList<Workmate>()
                 for(doc in colSnapshot.documents){
@@ -92,15 +92,19 @@ class RestaurantActivity : AppCompatActivity() {
             }
         }
 
-        // Call button listener
-        button_call.setOnClickListener {
-            val callIntent = Intent(Intent.ACTION_CALL)
-            callIntent.data = Uri.parse("tel:" + mRestaurant.phone)
-            if(ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED){
-                startActivity(callIntent)
-            } else {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), 0)
+        if(mRestaurant.phone != ""){
+            // Call button listener
+            button_call.setOnClickListener {
+                val callIntent = Intent(Intent.ACTION_CALL)
+                callIntent.data = Uri.parse("tel:" + mRestaurant.phone)
+                if(ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED){
+                    startActivity(callIntent)
+                } else {
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), 0)
+                }
             }
+        } else {
+            button_call.isEnabled = false
         }
 
         // Disable website button if there's none

@@ -54,6 +54,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
+
         // Catches GitHub auth intent
         val uri = intent.data
         if(uri != null && uri.toString().startsWith(getString(R.string.github_app_url))){
@@ -67,12 +70,12 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         // Initialize Twitter SDK
         Twitter.initialize(this)
 
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
         mAuth = FirebaseAuth.getInstance()
         if(mAuth.currentUser != null){
             startMainActivity()
+            return
         }
+
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -86,8 +89,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
         // Google sign-in button
         btn_google.setOnClickListener {
-            val signInIntent = mGoogleSignInClient.signInIntent
-            startActivityForResult(signInIntent, RC_GOOGLE)
+            startActivityForResult(mGoogleSignInClient.signInIntent, RC_GOOGLE)
         }
 
         // Facebook sign-in button
@@ -114,7 +116,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         // Twitter sign-in button
         btn_twitter.callback = object : Callback<TwitterSession>() {
             override fun success(result: Result<TwitterSession>) {
-                Log.d(TAG, "twitterLogin:success" + result)
+                Log.d(TAG, "twitterLogin:success$result")
                 signInTwitter(result.data)
             }
             override fun failure(exception: TwitterException) {
@@ -165,8 +167,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     override fun onDialogPositiveClick(dialog: DialogFragment, email:String, password:String) {
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if(it.isSuccessful){
+                // If authentication succeeds
                 startMainActivity()
             } else {
+                // If auth fails, try to create the account
                 mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
                     if(it.isSuccessful){
                         startMainActivity()
@@ -203,8 +207,8 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
 
             override fun onResponse(call: Call?, response: Response?) {
-                val responseBody = response!!.body().string()
-                val split = responseBody.split("[=&]".toRegex())
+                val responseBody = response?.body()?.string()
+                val split = responseBody!!.split("[=&]".toRegex())
                 if(split[0] == "access_token") {
                     signInGitHub(split[1])
                 } else {
@@ -276,22 +280,30 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     /** Start MainActivity for result */
     private fun startMainActivity(){
-        val intent = Intent(applicationContext, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        startActivityForResult(intent, RC_LOGOUT)
+        if(FirebaseAuth.getInstance().currentUser != null){
+            val intent = Intent(applicationContext, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivityForResult(intent, RC_LOGOUT)
+        } else {
+            // If user is signed in but not in Firebase Auth, recreate to recover the token correctly
+            this.recreate()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when(requestCode){
             RC_LOGOUT -> {
-                mGoogleSignInClient.signOut()
+                if(::mGoogleSignInClient.isInitialized){
+                    mGoogleSignInClient.signOut()
+                }
                 FirebaseAuth.getInstance().signOut()
-                FacebookSdk.clearLoggingBehaviors()
+                //FacebookSdk.clearLoggingBehaviors()
             }
             RC_GOOGLE -> {
                 if (resultCode == RESULT_OK) {
-                    startMainActivity()
+                    val user = FirebaseAuth.getInstance().currentUser
+                        startMainActivity()
                 } else {
                     // Sign in failed, check response for error code
                     Toast.makeText(applicationContext, getString(R.string.connectionfail), Toast.LENGTH_SHORT).show()
@@ -302,8 +314,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
         }
         if(FacebookSdk.isFacebookRequestCode(requestCode) && resultCode == RESULT_OK){
-            mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
-            startMainActivity()
+            if(::mFbCallbackManager.isInitialized){
+                mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
+                startMainActivity()
+            }
         }
 
     }

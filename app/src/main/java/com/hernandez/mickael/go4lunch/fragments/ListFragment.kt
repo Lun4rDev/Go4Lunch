@@ -50,7 +50,7 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Setting up adapter with arrayList
-        listView = view.findViewById<ListView>(R.id.places_list)
+        listView = view.findViewById(R.id.places_list)
         listView.adapter = mAdapter
         listView.emptyView = view.findViewById(R.id.list_empty)
 
@@ -69,10 +69,9 @@ class ListFragment : Fragment() {
     fun resetList(){
         if(placesList.size > 0){
             placesList.clear()
-            mAdapter.notifyDataSetChanged()
-            /*if(!mAdapter.isEmpty){
+            if(::mAdapter.isInitialized){
                 mAdapter.notifyDataSetChanged()
-            }*/
+            }
         }
     }
 
@@ -83,7 +82,13 @@ class ListFragment : Fragment() {
     fun addRestaurant(place: Restaurant){
         if(placesList.none { it.id == place.id }){
             placesList.add(place)
-            mAdapter.notifyDataSetChanged()
+            if(::mAdapter.isInitialized){
+                mAdapter.notifyDataSetChanged()
+            }
         }
+    }
+
+    fun notifyDataSetChanged() {
+        mAdapter.notifyDataSetChanged()
     }
 }

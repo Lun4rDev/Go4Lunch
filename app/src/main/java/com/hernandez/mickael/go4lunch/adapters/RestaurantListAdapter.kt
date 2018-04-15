@@ -1,12 +1,12 @@
 package com.hernandez.mickael.go4lunch.adapters
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
@@ -28,7 +28,13 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
         convertView.findViewById<TextView>(R.id.place_desc).text = item.address
 
         // Opening time
-        //convertView.findViewById<TextView>(R.id.place_open).text = item.phoneNumber
+        if(item.open != null && item.open){
+            convertView.findViewById<TextView>(R.id.place_open).text = context.getString(R.string.open)
+            convertView.findViewById<TextView>(R.id.place_open).setTextColor(Color.GREEN)
+        } else {
+            convertView.findViewById<TextView>(R.id.place_open).text = context.getString(R.string.closed)
+            convertView.findViewById<TextView>(R.id.place_open).setTextColor(Color.RED)
+        }
 
         // Workmates number
         convertView.findViewById<TextView>(R.id.place_mates).text = "(" + item.workmates.size + ")"
@@ -41,7 +47,11 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
             }
         }*/
         // Rating
-        convertView.findViewById<TextView>(R.id.place_rating).text = item.rating.toString() + "/5"
+        if(item.rating != null || item.rating < 0){
+            convertView.findViewById<TextView>(R.id.place_rating).text = item.rating.toString() + "/5"
+        } else {
+            convertView.findViewById<TextView>(R.id.place_rating).text = "n.a"
+        }
 
         // Distance
         val dStr = item.distance.roundToInt().toString() + "m"
