@@ -32,18 +32,21 @@ import com.hernandez.mickael.go4lunch.dialogs.EmailDialogFragment
  * Created by Mickael Hernandez on 31/01/2018.
  */
 class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogListener {
+
+    /** Debug tag */
     val TAG = "DEBUGTAG"
 
-    /** Request codes */
+    /** Logout request code */
     val RC_LOGOUT = 456
 
+    /** Google request code */
     val RC_GOOGLE = 123
+
+    /** Facebook request code */
     val RC_FACEBOOK = 64206
 
     /** Firebase auth instance */
     private var mAuth = FirebaseAuth.getInstance()
-
-    private lateinit var mAuthStateListener : FirebaseAuth.AuthStateListener
 
     /** Facebook callback manager */
     private lateinit var mFbCallbackManager: CallbackManager
@@ -54,8 +57,24 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inflates the layout
-        setContentView(R.layout.activity_connection)
+        // If user is already signed in
+        mAuth = FirebaseAuth.getInstance()
+        if(mAuth.currentUser != null){
+            startMainActivity()
+            return
+        }
+
+        // Recovering Facebook account
+        val fbToken = AccessToken.getCurrentAccessToken()
+        if(fbToken != null){
+            signInFacebook(fbToken)
+        }
+
+        // Recovering Google account
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if(account != null){
+            signInGoogle(account.idToken.toString())
+        }
 
         // Catches GitHub auth intent
         val uri = intent.data
@@ -67,15 +86,11 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
         }
 
+        // Inflates the layout
+        setContentView(R.layout.activity_connection)
+
         // Initialize Twitter SDK
         Twitter.initialize(this)
-
-        mAuth = FirebaseAuth.getInstance()
-        if(mAuth.currentUser != null){
-            startMainActivity()
-            return
-        }
-
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -98,19 +113,15 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         loginButton.setReadPermissions("email", "public_profile")
         loginButton.registerCallback(mFbCallbackManager, object : FacebookCallback<LoginResult> {
             override fun onSuccess(loginResult: LoginResult) {
-                //Log.d(FragmentActivity.TAG, "facebook:onSuccess:" + loginResult)
+                Log.d(TAG, "facebook:onSuccess:$loginResult")
                 signInFacebook(loginResult.accessToken)
             }
             override fun onCancel() {
                 Log.d(TAG, "facebook:onCancel")
-                // ...
             }
-
             override fun onError(error: FacebookException) {
                 Log.d(TAG, "facebook:onError", error)
-                // ...
             }
-
         })
 
         // Twitter sign-in button
@@ -144,26 +155,15 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             startActivity(intent)
         }
 
+        // E-mail sign-in button
         btn_email.setOnClickListener {
             val newFragment = EmailDialogFragment()
             newFragment.show(supportFragmentManager, "missiles")
 
         }
-
-        // Recovering Facebook account
-        val fbToken = AccessToken.getCurrentAccessToken()
-        if(fbToken != null){
-            signInFacebook(fbToken)
-        }
-
-        // Recovering Google account
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        if(account != null){
-            signInGoogle(account.idToken.toString())
-        }
     }
 
-    // Positive response from mail sign-in dialog
+    /** Positive response from email sign-in dialog */
     override fun onDialogPositiveClick(dialog: DialogFragment, email:String, password:String) {
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if(it.isSuccessful){
@@ -182,9 +182,8 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         }
     }
 
-    // Negative response from mail sign-in dialog
-    override fun onDialogNegativeClick(dialog: DialogFragment) {
-    }
+    /** Negative response from mail sign-in dialog */
+    override fun onDialogNegativeClick(dialog: DialogFragment) {}
 
     /** Send POST request to GitHub with OkHttp3 */
     private fun sendPost(code: String, state: String) {
@@ -219,6 +218,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         })
     }
 
+    /** Google credentials */
     private fun signInGoogle(token: String){
         val cred = GoogleAuthProvider.getCredential(token, null)
         signInWithCredential(cred)
@@ -250,7 +250,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success")
                         //val user = mAuth.currentUser
-                        //updateUI(user)
                         startMainActivity()
                     } else {
                         if(task.exception is FirebaseAuthUserCollisionException) {
@@ -265,7 +264,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                                         }
 
                                     }
-                            //updateUI(null)
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -273,8 +271,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                                     Toast.LENGTH_SHORT).show()
                         }
                     }
-
-                    // ...
                 })
     }
 

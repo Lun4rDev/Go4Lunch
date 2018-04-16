@@ -87,6 +87,7 @@ open class MainActivity : AppCompatActivity(),
 
     val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
+    /** Delay between Place Details Web API requests */
     val REQUEST_DELAY = .25.toLong()
 
     /** Personal Firestore document reference */
@@ -107,6 +108,9 @@ open class MainActivity : AppCompatActivity(),
     /** Actual restaurants count, used in tests */
     private var mRestaurantCount = 0
 
+    /** Experimental buffer for map markers */
+    var mMarkersBuffer = ArrayList<MarkerOptions>()
+
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
 
@@ -118,11 +122,8 @@ open class MainActivity : AppCompatActivity(),
 
     /** Google APIs clients */
     private lateinit var mGoogleApiClient: GoogleApiClient
-
     private lateinit var mGeoDataClient: GeoDataClient
-
     private lateinit var mPlaceDetectionClient: PlaceDetectionClient
-
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
     /** User last known location */
@@ -146,10 +147,15 @@ open class MainActivity : AppCompatActivity(),
     /**Workmates list fragment */
     private val mWorkmatesFragment = WorkmatesFragment()
 
-    /** On class creation */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Prevent unsigned user to enter the app
+        if(FirebaseAuth.getInstance().currentUser == null || FirebaseAuth.getInstance().currentUser?.uid == null){
+            finish()
+        }
+
+        // Inflates the layout
         setContentView(R.layout.activity_main)
 
         // Limiting the offscreen page limit of the viewpager
@@ -181,17 +187,14 @@ open class MainActivity : AppCompatActivity(),
             item ->
             when (item.itemId) {
                 R.id.navigation_map -> {
-                    //changeFragment(0)
                     viewPager.currentItem = 0
                     toolbar.title = getString(R.string.restaurant_map)
                 }
                 R.id.navigation_list -> {
-                    //changeFragment(1)
                     viewPager.currentItem = 1
                     toolbar.title = getString(R.string.restaurant_list)
                 }
                 R.id.navigation_people -> {
-                    //changeFragment(2)
                     viewPager.currentItem = 2
                     toolbar.title = getString(R.string.people_view)
                 }
@@ -199,6 +202,7 @@ open class MainActivity : AppCompatActivity(),
             true
         }
 
+        // Use this class as bottom navigation listener
         nav_view.setNavigationItemSelectedListener(this)
 
         // Retain map fragment instance
@@ -237,26 +241,17 @@ open class MainActivity : AppCompatActivity(),
 
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
-    }
 
-    override fun onStart() {
-        super.onStart()
-        // Fill UI with Firebase user data
-        FirebaseAuth.getInstance().addAuthStateListener {
-            mUser = FirebaseAuth.getInstance().currentUser
-            if(mUser != null && mUser?.uid != null){
-                fillDrawerHeader()
+        fillDrawerHeader()
 
-                // Initiate user document reference
-                mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
+        // Initiate user document reference
+        mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
-                // Get workmates from the database
-                mColRef.addSnapshotListener { colSnapshot, _ ->
-                    if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
-                        for(doc in colSnapshot.documents){
-                            mWorkmatesList.add(doc.toObject(Workmate::class.java))
-                        }
-                    }
+        // Get workmates from the database
+        mColRef.addSnapshotListener { colSnapshot, _ ->
+            if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
+                for(doc in colSnapshot.documents){
+                    mWorkmatesList.add(doc.toObject(Workmate::class.java))
                 }
             }
         }
@@ -363,6 +358,7 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
+    /** Updates location UI depending on the permission */
     private fun updateLocationUI() {
         try {
             if (mLocationPermissionGranted) {
@@ -380,11 +376,11 @@ open class MainActivity : AppCompatActivity(),
 
     }
 
-    private fun getDeviceLocation() {
-        /*
+    /**
        * Get the best and most recent location of the device, which may be null in rare
        * cases when a location is not available.
        */
+    private fun getDeviceLocation() {
         try
         {
             if (mLocationPermissionGranted)
@@ -412,14 +408,6 @@ open class MainActivity : AppCompatActivity(),
         catch (e:SecurityException) {
             Log.e("Exception: %s", e.message)
         }
-    }
-
-    fun toBounds(location: Location, radiusInMeters: Double): LatLngBounds {
-        val center = LatLng(location.longitude, location.latitude)
-        val distanceFromCenterToCorner = radiusInMeters * Math.sqrt(2.0)
-        val southwestCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 225.0)
-        val northeastCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 45.0)
-        return LatLngBounds(southwestCorner, northeastCorner)
     }
 
     /** Handles click on a navigation drawer item */
@@ -464,10 +452,6 @@ open class MainActivity : AppCompatActivity(),
     /** On Google API connection failed */
     override fun onConnectionFailed(p0: ConnectionResult) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    private fun locToStr(loc: Location): String {
-        return "${loc.latitude}, ${loc.longitude}"
     }
 
     /** Displays restaurant according to its id */
@@ -568,8 +552,6 @@ open class MainActivity : AppCompatActivity(),
             }
         })
     }
-
-    var mMarkersBuffer = ArrayList<MarkerOptions>()
 
     /** Adds the restaurants to the Map and List fragments */
     fun addRestaurants(res: List<Result>){
@@ -685,18 +667,22 @@ open class MainActivity : AppCompatActivity(),
         return false
     }
 
+    /** When the user changes the search query */
     override fun onQueryTextChange(newText: String?): Boolean {
         return false
     }
 
+    /** Returns the number of restaurants found (used in tests) */
     fun getRestaurantCount(): Int {
         return mRestaurantCount
     }
 
+    /** Returns the number of workmates found (used in tests) */
     fun getWorkmatesCount(): Int {
         return mWorkmatesFragment.getList().size
     }
 
+    /** Converts a Vector resource into a BitmapDescriptor */
     private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor {
         val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
         vectorDrawable?.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
@@ -704,5 +690,10 @@ open class MainActivity : AppCompatActivity(),
         val canvas = Canvas(bitmap)
         vectorDrawable.draw(canvas)
         return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
+
+    /** Puts the lat/lng of a location in a string */
+    private fun locToStr(loc: Location): String {
+        return "${loc.latitude}, ${loc.longitude}"
     }
 }

@@ -36,28 +36,40 @@ import java.lang.Exception
  */
 class ParametersActivity : AppCompatActivity() {
 
+    /** Shared Preferences key */
     private var KEY_SWITCH = "SWITCH"
 
+    /** Shared Preferences instance */
     private lateinit var mSharedPrefs: SharedPreferences
+
+    /** Notification alarm manager */
     lateinit var mAlarm : AlarmManager
 
+    /** Notification intent */
     private lateinit var notifIntent: PendingIntent
 
+    /** Name text field */
     private lateinit var editName : EditText
 
+    /** Image url text field */
     private lateinit var editImgUrl : EditText
 
+    /** Boolean telling if image url points to an actual image */
     private var isimageValid = false
 
-    // Fill UI with Firebase user data
+    /** Current user signed in Firebase */
     var mUser = FirebaseAuth.getInstance().currentUser
 
-    // Firestore user document
+    /** Firestore user document reference */
     private var mDocRef = FirebaseFirestore.getInstance().collection("users").document(mUser!!.uid)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Inflating layout
         setContentView(R.layout.activity_parameters)
+
+        // Sets the layout's custom toolbar as toolbar of this activity
         setSupportActionBar(findViewById(R.id.toolbar_params))
 
         // allow backward navigation
@@ -66,6 +78,7 @@ class ParametersActivity : AppCompatActivity() {
         // hide the title
         title = ""
 
+        // Gets Shared Preferences instance
         mSharedPrefs = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE)
 
         // Resume switch state
@@ -100,6 +113,8 @@ class ParametersActivity : AppCompatActivity() {
                 editImgUrl.setText(snapshot.getString("photoUrl"), TextView.BufferType.EDITABLE)
             }
         }
+
+        // Image url EditText listener
         editImgUrl.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(p0: Editable?) {}
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -121,11 +136,13 @@ class ParametersActivity : AppCompatActivity() {
         })
     }
 
+    /** Inflates the menu */
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.toolbar_parameters, menu)
         return true
     }
 
+    /** When the user selects an option in the toolbar */
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         // Handle item selection
         return when (item?.itemId) {
@@ -171,6 +188,6 @@ class ParametersActivity : AppCompatActivity() {
 
         mAlarm.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5 * 1000, AlarmManager.INTERVAL_DAY, notifIntent)
 
-        NotificationCompat.Builder(context, "MyNews")
+        NotificationCompat.Builder(context, getString(R.string.app_name))
     }
 }

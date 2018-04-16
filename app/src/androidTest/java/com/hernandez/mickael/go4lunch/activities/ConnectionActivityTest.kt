@@ -50,14 +50,20 @@ class ConnectionActivityTest {
     @Test
     fun connect() {
         // If user is automatically connected, try and disconnect
-        try {
+        /*try {
             onView(withId(R.id.search_item)).check(matches(isDisplayed()))
             Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
             Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_logout)) // clicks on the top stories item in drawer
         } catch(e: Exception){
             e.printStackTrace()
-        }
+        }*/
 
+        try {
+            onView(withText(mActivity.getString(R.string.restaurant_map))).check(matches(isDisplayed()))
+            return
+        } catch(e: Exception){
+            e.printStackTrace()
+        }
         // register next activity that need to be monitored.
         val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(MainActivity::class.java.name, null, false)
 
