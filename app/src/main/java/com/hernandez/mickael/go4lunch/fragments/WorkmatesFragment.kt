@@ -69,7 +69,7 @@ class WorkmatesFragment : Fragment() {
                 workmatesList.clear()
                 for(doc in colSnapshot.documents){
                     if(doc.exists()){
-                        workmatesList.add(doc.toObject(Workmate::class.java))
+                        workmatesList.add(doc.toObject(Workmate::class.java)!!)
                     }
                 }
                 mAdapter.notifyDataSetChanged()

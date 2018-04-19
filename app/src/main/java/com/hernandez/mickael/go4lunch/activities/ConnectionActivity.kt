@@ -1,6 +1,5 @@
 package com.hernandez.mickael.go4lunch.activities
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,8 +12,10 @@ import com.facebook.login.LoginResult
 import com.facebook.login.widget.LoginButton
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.*
 import com.hernandez.mickael.go4lunch.R
+import com.hernandez.mickael.go4lunch.dialogs.EmailDialogFragment
 import com.twitter.sdk.android.core.*
 import com.twitter.sdk.android.core.Callback
 import kotlinx.android.synthetic.main.activity_connection.*
@@ -22,11 +23,6 @@ import okhttp3.*
 import java.io.IOException
 import java.math.BigInteger
 import java.util.*
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.AuthCredential
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.firebase.auth.FirebaseUser
-import com.hernandez.mickael.go4lunch.dialogs.EmailDialogFragment
 
 /**
  * Created by Mickael Hernandez on 31/01/2018.
@@ -90,7 +86,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         setContentView(R.layout.activity_connection)
 
         // Initialize Twitter SDK
-        Twitter.initialize(this)
+        Twitter.initialize(applicationContext)
 
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -100,7 +96,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 .build()
 
         // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+        mGoogleSignInClient = GoogleSignIn.getClient(applicationContext, gso)
 
         // Google sign-in button
         btn_google.setOnClickListener {
@@ -132,7 +128,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
             }
             override fun failure(exception: TwitterException) {
                 Log.w(TAG, "twitterLogin:failure", exception)
-                //updateUI(null)
             }
 
         }
@@ -211,10 +206,9 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 if(split[0] == "access_token") {
                     signInGitHub(split[1])
                 } else {
-                    //Toast.makeText(context, responseBody, Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, responseBody, Toast.LENGTH_LONG).show()
                 }
             }
-
         })
     }
 
@@ -247,7 +241,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, { task ->
                     if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
+                        // Sign in success, start MainActivity
                         Log.d(TAG, "signInWithCredential:success")
                         //val user = mAuth.currentUser
                         startMainActivity()
@@ -256,18 +250,19 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                             mAuth.currentUser?.linkWithCredential(credential)
                                     ?.addOnCompleteListener{
                                         if (it.isSuccessful) {
+                                            Log.d(TAG, "signInWithCredential:success")
                                             startMainActivity()
                                         } else {
                                             mAuth.currentUser?.unlink(mAuth.currentUser!!.providerId)
-                                            //Log.w(TAG, "linkWithCredential:failure", task.exception)
-                                            Toast.makeText(this, "Account unlinked because of conflicts. Please retry.", Toast.LENGTH_LONG).show()
+                                            Log.d(TAG, "linkWithCredential:failure", task.exception)
+                                            Toast.makeText(applicationContext, "Account unlinked because of conflicts. Please retry.", Toast.LENGTH_LONG).show()
                                         }
 
                                     }
                         } else {
                             // If sign in fails, display a message to the user.
-                            Log.w(TAG, "signInWithCredential:failure", task.exception)
-                            Toast.makeText(this, "Authentication failed.",
+                            Log.d(TAG, "signInWithCredential:failure", task.exception)
+                            Toast.makeText(applicationContext, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -295,10 +290,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 }
                 FirebaseAuth.getInstance().signOut()
                 //FacebookSdk.clearLoggingBehaviors()
+                this.recreate()
             }
             RC_GOOGLE -> {
                 if (resultCode == RESULT_OK) {
-                    val user = FirebaseAuth.getInstance().currentUser
                         startMainActivity()
                 } else {
                     // Sign in failed, check response for error code
@@ -312,7 +307,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
         if(FacebookSdk.isFacebookRequestCode(requestCode) && resultCode == RESULT_OK){
             if(::mFbCallbackManager.isInitialized){
                 mFbCallbackManager.onActivityResult(requestCode, resultCode, data)
-                startMainActivity()
             }
         }
 

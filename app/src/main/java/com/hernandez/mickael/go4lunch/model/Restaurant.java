@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.hernandez.mickael.go4lunch.api.ApiSingleton;
 import com.hernandez.mickael.go4lunch.model.details.DetailsResult;
 
 import java.util.ArrayList;
@@ -37,6 +38,9 @@ public class Restaurant implements Parcelable {
     // Image
     public Bitmap img;
 
+    // Image url
+    //public String imgUrl;
+
     // Distance
     public Float distance;
 
@@ -55,6 +59,7 @@ public class Restaurant implements Parcelable {
         workmates = pWorkmates;
         distance = pDistance;
         open = pOpen;
+        //imgUrl = ApiSingleton.getUrlFromPhotoReference(result.getPhotos().get(0).getPhotoReference());
         if(result.getFormattedPhoneNumber() != null){ phone = result.getFormattedPhoneNumber(); }
         if(result.getRating() != null){rating = result.getRating();}
         if(result.getWebsite() != null){website = result.getWebsite();}
@@ -85,6 +90,7 @@ public class Restaurant implements Parcelable {
         workmates = in.readArrayList(Workmate.class.getClassLoader());
         distance = in.readFloat();
         open = in.readByte() != 0;
+        //imgUrl = in.readString();
         //img = in.readParcelable(resultPhotoResult.class.getClassLoader());
     }
 
@@ -105,6 +111,7 @@ public class Restaurant implements Parcelable {
         dest.writeList(workmates);
         dest.writeFloat(distance);
         dest.writeByte((byte) (open ? 1 : 0));
+        //dest.writeString(imgUrl);
         //dest.writeParcelable(img, 0);
     }
 
@@ -120,67 +127,3 @@ public class Restaurant implements Parcelable {
         }
     };
 }
-
-// val pId: String, val pName: CharSequence, val pType: Int, val pAddress: CharSequence, val pRating: Float
-/*@Parcelize
-@SuppressLint("ParcelCreator")
-data class Restaurant(var pId: String, val pName: CharSequence, val pType: Int, val pAddress: CharSequence, val pRating: Float): Parcelable {
-    constructor() : this()
-}*/
-/*data class Restaurant(val result: result): Parcelable {
-
-    // result ID
-    var id = result.id
-
-    // Name
-    var name: CharSequence = result.name
-
-    // Type
-    private var type = result.resultTypes[0]
-
-    // Address
-    var address: CharSequence = result.address
-
-    // Rating
-    var rating = result.rating
-
-    // Distance
-    var distance = 0.0f
-
-    // Image
-    lateinit var img: resultPhotoResult
-
-    /*constructor(parcel: Parcel) : this(
-        id = parcel.readString(),
-        name = parcel.readString(),
-        type = parcel.readInt(),
-        address = parcel.readString(),
-        rating = parcel.readFloat(),
-        distance = parcel.readFloat(),
-        img = parcel.readParcelable<Bitmap>(resultPhotoResult::class.java.classLoader))*/
-
-    /*override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(id)
-        parcel.writeString(name.toString())
-        parcel.writeInt(type)
-        parcel.writeString(address.toString())
-        parcel.writeFloat(rating)
-        parcel.writeFloat(distance)
-        parcel.writeParcelable(img, flags)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : Parcelable.Creator<Restaurant> {
-        override fun createFromParcel(parcel: Parcel): Restaurant {
-            return Restaurant(parcel)
-        }
-
-        override fun newArray(size: Int): Array<Restaurant?> {
-            return arrayOfNulls(size)
-        }
-    }
-
-}*/

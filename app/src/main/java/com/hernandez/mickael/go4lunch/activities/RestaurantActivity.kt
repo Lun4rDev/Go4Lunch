@@ -82,7 +82,7 @@ class RestaurantActivity : AppCompatActivity() {
                         if(doc.get("uid") == mUser!!.uid){
                             updateUI(true)
                         } else {
-                            res.add(doc.toObject(Workmate::class.java))
+                            res.add(doc.toObject(Workmate::class.java)!!)
                         }
                     }
                 }
