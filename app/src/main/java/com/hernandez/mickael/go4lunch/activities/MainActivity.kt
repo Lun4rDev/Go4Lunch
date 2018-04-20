@@ -483,22 +483,31 @@ open class MainActivity : AppCompatActivity(),
                                     mLastKnownLocation.latitude, mLastKnownLocation.longitude,
                                     distance)
 
-                            // Get photo
-                            Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, res.placeId).setResultCallback {
-                                if (it.photoMetadata != null && it.photoMetadata.count > 0) {
-                                    it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                        val intent = Intent(applicationContext, RestaurantActivity::class.java)
-                                        // TODO: Create getplacebyid by web api to get the open state
-                                        intent.putExtra("Restaurant", Restaurant(res, arrayListOf<Workmate>(), distance[0], false, it.bitmap))
-                                        val bStream = ByteArrayOutputStream()
-                                        it.bitmap.compress(Bitmap.CompressFormat.PNG, 100, bStream)
-                                        val byteArray = bStream.toByteArray()
-                                        intent.putExtra("Image", byteArray)
+                            val restaurant = Restaurant(res, arrayListOf<Workmate>(), distance[0], false)
 
-                                        // Hides the loading animation
-                                        loading_view.visibility = View.GONE
-
-                                        startActivity(intent)
+                            if(res.photos[0].photoReference != null){
+                                runOnUiThread {
+                                    // Download place image into a bitmap
+                                    Glide.with(applicationContext)
+                                            .load(ApiSingleton.getUrlFromPhotoReference(res.photos[0].photoReference))
+                                            .asBitmap()
+                                            .centerCrop()
+                                            .into(object: SimpleTarget<Bitmap>(){
+                                                override fun onResourceReady(resource: Bitmap, glideAnimation: GlideAnimation<in Bitmap>?) {
+                                                    restaurant.img = resource
+                                                    displayRestaurantWithObject(restaurant)
+                                                }
+                                            })
+                                }
+                                // Else, rely on Android Place Photos API
+                            } else {
+                                // Get photo
+                                Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, res.placeId).setResultCallback {
+                                    if (it.photoMetadata != null && it.photoMetadata.count > 0) {
+                                        it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
+                                            restaurant.img = it.bitmap
+                                            displayRestaurantWithObject(restaurant)
+                                        }
                                     }
                                 }
                             }
@@ -509,6 +518,21 @@ open class MainActivity : AppCompatActivity(),
                     }
 
                 })
+    }
+
+    /** Opens RestaurantActivity intent based on a Restaurant object */
+    private fun displayRestaurantWithObject(res: Restaurant){
+        val intent = Intent(applicationContext, RestaurantActivity::class.java)
+        intent.putExtra("Restaurant", res)
+        val bStream = ByteArrayOutputStream()
+        res.img.compress(Bitmap.CompressFormat.PNG, 100, bStream)
+        val byteArray = bStream.toByteArray()
+        intent.putExtra("Image", byteArray)
+
+        // Hides the loading animation
+        loading_view.visibility = View.GONE
+
+        startActivity(intent)
     }
 
     /** Use Google Places APIs to find nearby restaurants */
