@@ -3,11 +3,13 @@ package com.hernandez.mickael.go4lunch.activities
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.support.v4.app.DialogFragment
 import android.support.v4.app.FragmentActivity
 import android.util.Log
 import android.widget.Toast
 import com.facebook.*
+import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.facebook.login.widget.LoginButton
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -206,6 +208,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 if(split[0] == "access_token") {
                     signInGitHub(split[1])
                 } else {
+                    Looper.prepare()
                     Toast.makeText(applicationContext, responseBody, Toast.LENGTH_LONG).show()
                 }
             }
@@ -240,7 +243,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     private fun signInWithCredential(credential: AuthCredential){
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, { task ->
-                    if (task.isSuccessful) {
+                     if (task.isSuccessful) {
                         // Sign in success, start MainActivity
                         Log.d(TAG, "signInWithCredential:success")
                         //val user = mAuth.currentUser
@@ -288,8 +291,10 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 if(::mGoogleSignInClient.isInitialized){
                     mGoogleSignInClient.signOut()
                 }
+                // Sign Firebase user out
                 FirebaseAuth.getInstance().signOut()
-                //FacebookSdk.clearLoggingBehaviors()
+                // Sign Facebook user out
+                LoginManager.getInstance().logOut()
                 this.recreate()
             }
             RC_GOOGLE -> {

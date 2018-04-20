@@ -29,6 +29,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.animation.GlideAnimation
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.target.Target
+import com.facebook.login.LoginManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -130,7 +131,7 @@ open class MainActivity : AppCompatActivity(),
     private var mLastKnownLocation = Location("")
 
     /** Default GoogleMap zoom value */
-    private val DEFAULT_ZOOM = 16f
+    private val DEFAULT_ZOOM = 14f
 
     /** Default user location */
     private var mDefaultLocation = LatLng(.0, .0)

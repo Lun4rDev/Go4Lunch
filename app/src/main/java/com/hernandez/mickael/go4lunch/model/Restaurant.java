@@ -45,7 +45,7 @@ public class Restaurant implements Parcelable {
     public Float distance;
 
     // Workmates coming to this restaurant
-    public ArrayList workmates;
+    public ArrayList<Workmate> workmates;
 
     // True if open
     public Boolean open;
