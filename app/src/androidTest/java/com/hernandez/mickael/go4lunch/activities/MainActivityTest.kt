@@ -93,13 +93,14 @@ class MainActivityTest {
 
     /** Tests the launch of RestaurantActivity via the workmates ListView */
     @Test
-    fun restaurantViaListView() {
+    fun restaurantViaNavigationDrawer() {
+        Thread.sleep(mDelay)
         // register next activity that need to be monitored.
         val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(RestaurantActivity::class.java.name, null, false)
-        mActivity.viewPager.currentItem = 2
+        //mActivity.viewPager.currentItem = 2
         Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
         Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_lunch)) // clicks on the top stories item in drawer
-        Thread.sleep(mDelay)
+        Thread.sleep(5*mDelay)
         val nextActivity = getInstrumentation().waitForMonitorWithTimeout(activityMonitor, mDelay)
         assertNotNull(nextActivity) // assert that the selected tab is the second (top stories tab)
         nextActivity.finish()

@@ -71,7 +71,6 @@ class RestaurantActivity : AppCompatActivity() {
         // Text view for the empty list
         list_workmates.emptyView = text_empty
 
-        // Getting workmates joining this restaurant from Firestore
         mColRef.addSnapshotListener { colSnapshot, _ ->
             if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                 val res = ArrayList<Workmate>()
@@ -82,7 +81,7 @@ class RestaurantActivity : AppCompatActivity() {
                         if(doc.get("uid") == mUser!!.uid){
                             updateUI(true)
                         } else {
-                            res.add(doc.toObject(Workmate::class.java))
+                            res.add(doc.toObject(Workmate::class.java)!!)
                         }
                     }
                 }

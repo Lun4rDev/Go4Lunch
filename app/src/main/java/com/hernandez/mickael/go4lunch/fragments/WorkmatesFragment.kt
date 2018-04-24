@@ -28,11 +28,11 @@ import com.hernandez.mickael.go4lunch.activities.MainActivity
  */
 class WorkmatesFragment : Fragment() {
 
+    /** List of workmates */
     private var workmatesList = ArrayList<Workmate>()
 
+    /** Adapter between workmates list and ListView */
     private lateinit var mAdapter: WorkmatesListAdapter
-
-    private lateinit var mainActivity: MainActivity
 
     /** Users Firestore collection reference */
     var mColRef = FirebaseFirestore.getInstance().collection("users")
@@ -46,6 +46,7 @@ class WorkmatesFragment : Fragment() {
 
         // RecyclerView in layout
         val recyclerView = convertView.findViewById<RecyclerView>(R.id.list_workmates)
+
         // Setting up list and its adapter
         mAdapter = WorkmatesListAdapter(context!!, R.layout.row_workmate, workmatesList)
         val llm = LinearLayoutManager(context)
@@ -68,7 +69,7 @@ class WorkmatesFragment : Fragment() {
                 workmatesList.clear()
                 for(doc in colSnapshot.documents){
                     if(doc.exists()){
-                        workmatesList.add(doc.toObject(Workmate::class.java))
+                        workmatesList.add(doc.toObject(Workmate::class.java)!!)
                     }
                 }
                 mAdapter.notifyDataSetChanged()
@@ -84,6 +85,7 @@ class WorkmatesFragment : Fragment() {
         mAdapter.notifyDataSetChanged()
     }
 
+    /** Returns list of workmates */
     fun getList(): ArrayList<Workmate> {
         return workmatesList
     }
