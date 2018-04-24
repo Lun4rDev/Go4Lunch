@@ -93,7 +93,7 @@ class MainActivityTest {
 
     /** Tests the launch of RestaurantActivity via the workmates ListView */
     @Test
-    fun restaurantViaListView() {
+    fun restaurantViaNavigationDrawer() {
         Thread.sleep(mDelay)
         // register next activity that need to be monitored.
         val activityMonitor = InstrumentationRegistry.getInstrumentation().addMonitor(RestaurantActivity::class.java.name, null, false)

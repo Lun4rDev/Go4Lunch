@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import com.bumptech.glide.Glide
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.model.Restaurant
 import kotlin.math.roundToInt
@@ -29,12 +28,18 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
         convertView.findViewById<TextView>(R.id.place_desc).text = item.address
 
         // Opening time
-        if(item.open != null && item.open){
-            convertView.findViewById<TextView>(R.id.place_open).text = context.getString(R.string.open)
+        if(item.open != null && item.open && item.closingTime != ""){
+            // Restaurant is opened
+            convertView.findViewById<TextView>(R.id.place_open).text = String.format(context.getString(R.string.openUntil), item.closingTime)
             convertView.findViewById<TextView>(R.id.place_open).setTextColor(Color.GREEN)
-        } else {
-            convertView.findViewById<TextView>(R.id.place_open).text = context.getString(R.string.closed)
+        } else if(item.openingTime != ""){
+            // Restaurant is closed
+            convertView.findViewById<TextView>(R.id.place_open).text = String.format(context.getString(R.string.closeUntil), item.openingTime)
             convertView.findViewById<TextView>(R.id.place_open).setTextColor(Color.RED)
+        } else {
+            // Restaurant's opening times unavailable
+            convertView.findViewById<TextView>(R.id.place_open).text = context.getString(R.string.times_unavailable)
+            convertView.findViewById<TextView>(R.id.place_open).setTextColor(Color.GRAY)
         }
 
         // Workmates number

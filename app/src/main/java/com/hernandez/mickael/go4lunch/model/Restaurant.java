@@ -8,6 +8,7 @@ import com.hernandez.mickael.go4lunch.api.ApiSingleton;
 import com.hernandez.mickael.go4lunch.model.details.DetailsResult;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 
 /**
@@ -45,20 +46,34 @@ public class Restaurant implements Parcelable {
     public Float distance;
 
     // Workmates coming to this restaurant
-    public ArrayList<Workmate> workmates;
+    public ArrayList workmates;
 
-    // True if open
+    // True if opened
     public Boolean open;
 
+    // Opening hour and minute in HHMM format
+    public String openingTime;
 
-    public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance, Boolean pOpen){
+    // Closing hour and minute in HHMM format
+    public String closingTime;
+
+
+    public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance){
         id = result.getPlaceId();
         name = result.getName();
         type = result.getTypes().get(0);
         address = result.getFormattedAddress();
         workmates = pWorkmates;
         distance = pDistance;
-        open = pOpen;
+        open = result.getOpeningHours() != null && result.getOpeningHours().getOpenNow() != null && result.getOpeningHours().getOpenNow();
+        if(result.getOpeningHours() != null){
+            openingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            closingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            addSeparatorToTimes();
+        } else {
+            openingTime = "";
+            closingTime = "";
+        }
         //imgUrl = ApiSingleton.getUrlFromPhotoReference(result.getPhotos().get(0).getPhotoReference());
         if(result.getFormattedPhoneNumber() != null){ phone = result.getFormattedPhoneNumber(); }
         if(result.getRating() != null){rating = result.getRating();}
@@ -73,10 +88,23 @@ public class Restaurant implements Parcelable {
         workmates = pWorkmates;
         distance = pDistance;
         img = pImg;
-        open = pOpen;
+        open = result.getOpeningHours() != null && result.getOpeningHours().getOpenNow() != null && result.getOpeningHours().getOpenNow();
+        if(result.getOpeningHours() != null){
+            openingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            closingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            addSeparatorToTimes();
+        } else {
+            openingTime = "";
+            closingTime = "";
+        }
         if(result.getFormattedPhoneNumber() != null){ phone = result.getFormattedPhoneNumber(); }
         if(result.getRating() != null){rating = result.getRating();}
         if(result.getWebsite() != null){website = result.getWebsite();}
+    }
+
+    private void addSeparatorToTimes() {
+        openingTime = openingTime.substring(0, 2) + ":" + openingTime.substring(2);
+        closingTime = closingTime.substring(0, 2) + ":" + closingTime.substring(2);
     }
 
     private Restaurant(Parcel in) {
@@ -90,6 +118,8 @@ public class Restaurant implements Parcelable {
         workmates = in.readArrayList(Workmate.class.getClassLoader());
         distance = in.readFloat();
         open = in.readByte() != 0;
+        openingTime = in.readString();
+        closingTime = in.readString();
         //imgUrl = in.readString();
         //img = in.readParcelable(resultPhotoResult.class.getClassLoader());
     }
@@ -111,6 +141,8 @@ public class Restaurant implements Parcelable {
         dest.writeList(workmates);
         dest.writeFloat(distance);
         dest.writeByte((byte) (open ? 1 : 0));
+        dest.writeString(openingTime);
+        dest.writeString(closingTime);
         //dest.writeString(imgUrl);
         //dest.writeParcelable(img, 0);
     }

@@ -74,7 +74,8 @@
     <string name="changes_success">Changes have been saved successfully.</string>
     <string name="display_name">Name :</string>
     <string name="picture_url">Picture URL :</string>
-    <string name="open">open</string>
-    <string name="closed">closed</string>
+    <string name="openUntil">Open until %1$s</string>
+    <string name="closeUntil">Close until %1$s</string>
+    <string name="times_unavailable">Opening times unavailable</string>
     <string name="params_missing">One of the parameters is missing.</string>
 </resources>

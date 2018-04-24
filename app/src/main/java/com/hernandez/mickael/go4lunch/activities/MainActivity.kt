@@ -66,8 +66,10 @@ import com.hernandez.mickael.go4lunch.model.search.SearchResponse
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import org.reactivestreams.Subscription
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -109,9 +111,6 @@ open class MainActivity : AppCompatActivity(),
     /** Actual restaurants count, used in tests */
     private var mRestaurantCount = 0
 
-    /** Experimental buffer for map markers */
-    var mMarkersBuffer = ArrayList<MarkerOptions>()
-
     /** Bottom navigation adapter */
     private lateinit var pagerAdapter : BottomBarAdapter
 
@@ -147,6 +146,12 @@ open class MainActivity : AppCompatActivity(),
 
     /**Workmates list fragment */
     private val mWorkmatesFragment = WorkmatesFragment()
+
+    /** Restaurant list */
+    private val mRestaurantList = ArrayList<Restaurant>()
+
+    /** API Subscribe object */
+    private lateinit var mSubscription : Subscription
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -243,6 +248,7 @@ open class MainActivity : AppCompatActivity(),
         // Toolbar search listener
         searchView.setOnQueryTextListener(this)
 
+        // Firebase Auth State listener
         FirebaseAuth.getInstance().addAuthStateListener {
             if(it.currentUser != null){
                 mUser = it.currentUser
@@ -325,23 +331,17 @@ open class MainActivity : AppCompatActivity(),
         // Compass button
         mMap.uiSettings.isCompassEnabled = true
 
-        // Markers buffer
-        for(m in mMarkersBuffer){
-            mMap.addMarker(m)
-        }
-        mMarkersBuffer.clear()
-
         // Marker window click listener
         mMap.setOnInfoWindowClickListener { marker ->
-            if(marker.tag is String){
+            if(marker.tag != null && marker.tag is String){
                 displayRestaurant(marker.tag.toString())
+            } else {
+                for(res in mListFragment.getList()){
+                    if(res.name == marker.title){
+                        displayRestaurant(res.id)
+                    }
+                }
             }
-            /*val res = mListFragment.getList().firstOrNull {
-                it.name == marker.title
-            }
-            if(res != null){
-                displayRestaurant(res.id)
-            }*/
         }
     }
 
@@ -466,6 +466,14 @@ open class MainActivity : AppCompatActivity(),
         // Shows the loading animation
         loading_view.visibility = View.VISIBLE
 
+        // Check if the restaurant data is already available
+        for(res in mRestaurantList){
+            if(res.id == placeId){
+                displayRestaurantWithObject(res)
+                return
+            }
+        }
+
         ApiSingleton.getInstance().details(placeId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -483,8 +491,8 @@ open class MainActivity : AppCompatActivity(),
                                     mLastKnownLocation.latitude, mLastKnownLocation.longitude,
                                     distance)
 
-                            val restaurant = Restaurant(res, arrayListOf<Workmate>(), distance[0], false)
-
+                            val restaurant = Restaurant(res, arrayListOf<Workmate>(), distance[0])
+                            mRestaurantList.add(restaurant)
                             if(res.photos[0].photoReference != null){
                                 runOnUiThread {
                                     // Download place image into a bitmap
@@ -522,17 +530,19 @@ open class MainActivity : AppCompatActivity(),
 
     /** Opens RestaurantActivity intent based on a Restaurant object */
     private fun displayRestaurantWithObject(res: Restaurant){
-        val intent = Intent(applicationContext, RestaurantActivity::class.java)
-        intent.putExtra("Restaurant", res)
-        val bStream = ByteArrayOutputStream()
-        res.img.compress(Bitmap.CompressFormat.PNG, 100, bStream)
-        val byteArray = bStream.toByteArray()
-        intent.putExtra("Image", byteArray)
+        if(res.img != null){
+            val intent = Intent(applicationContext, RestaurantActivity::class.java)
+            intent.putExtra("Restaurant", res)
+            val bStream = ByteArrayOutputStream()
+            res.img.compress(Bitmap.CompressFormat.PNG, 100, bStream)
+            val byteArray = bStream.toByteArray()
+            intent.putExtra("Image", byteArray)
 
-        // Hides the loading animation
-        loading_view.visibility = View.GONE
+            // Hides the loading animation
+            loading_view.visibility = View.GONE
 
-        startActivity(intent)
+            startActivity(intent)
+        }
     }
 
     /** Use Google Places APIs to find nearby restaurants */
@@ -565,6 +575,9 @@ open class MainActivity : AppCompatActivity(),
         // Shows the loading animation
         loading_view.visibility = View.VISIBLE
 
+        // Clears restaurant list
+        mRestaurantList.clear()
+
         // Removes all rows in list
         mListFragment.resetList()
 
@@ -589,7 +602,6 @@ open class MainActivity : AppCompatActivity(),
         mRestaurantCount = res.size
         for(p in res){
             //if(p.types.contains("restaurant")){
-            val open = p.openingHours != null && p.openingHours.openNow != null && p.openingHours.openNow
             // Distance between last location and restaurant
             val distance = floatArrayOf(0f)
             Location.distanceBetween(p.geometry.location.lat, p.geometry.location.lng,
@@ -617,24 +629,20 @@ open class MainActivity : AppCompatActivity(),
             if(::mMap.isInitialized){
                 val m = mMap.addMarker(marker)
                 m.tag = p.placeId
-            } else {
-                mMarkersBuffer.add(marker)
             }
                 // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .throttleLast(REQUEST_DELAY, TimeUnit.SECONDS)
-                        .subscribe(object: Observer<DetailsResponse> {
+                        .subscribeWith(object: DisposableObserver<DetailsResponse>() {
                             override fun onComplete() {
-
-                            }
-                            override fun onSubscribe(d: Disposable) {
                             }
                             override fun onNext(t: DetailsResponse) {
                                 val result = t.detailsResult
                                 if(result != null){
-                                    val restaurant = Restaurant(result, mates, distance[0], open)
+                                    val restaurant = Restaurant(result, mates, distance[0])
+                                    mRestaurantList.add(restaurant)
                                         // If there is an image in the result
                                         if(result.photos[0].photoReference != null){
                                             runOnUiThread {

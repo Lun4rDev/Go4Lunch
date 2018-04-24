@@ -26,6 +26,11 @@ import java.nio.file.Files.exists
 @RunWith(AndroidJUnit4::class)
 
 class ConnectionActivityTest {
+
+    /** Test account credentials */
+    var mAccountMail = "test@test.com"
+    var mAccountPassword = "test_password"
+
     @Rule
     @JvmField
     var mActivityTestRule = ActivityTestRule(ConnectionActivity::class.java)
@@ -74,8 +79,8 @@ class ConnectionActivityTest {
         Thread.sleep(1000)
 
         // fills EditViews with mail and password
-        onView(withId(R.id.edit_username)).perform(clearText(), typeText("test@test.com"))
-        onView(withId(R.id.edit_password)).perform(clearText(), typeText("test_password"))
+        onView(withId(R.id.edit_username)).perform(clearText(), typeText(mAccountMail))
+        onView(withId(R.id.edit_password)).perform(clearText(), typeText(mAccountPassword))
 
         // clicks on sign-in
         onView(withText(R.string.signin)).perform(click())
