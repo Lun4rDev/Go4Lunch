@@ -63,12 +63,12 @@ class AlarmReceiver: BroadcastReceiver() {
                 // if a restaurant is selected
                 if(it.result.contains("restaurantName") && it.result.getString("restaurantName") != ""){
                     placeSelected = true
-                    placeName = it.result.getString("restaurantName")
+                    placeName = it.result.getString("restaurantName").toString()
                     // search in every user document for workmates going to the same place
                     mColRef.addSnapshotListener { pSnapshot, _ ->
-                        if(!pSnapshot.isEmpty){
+                        if(!pSnapshot?.isEmpty!!){
                             // Keeping count value, then recounting and comparing to know if it should notify
-                            var matesCountTemp = matesCount
+                            val matesCountTemp = matesCount
                             matesCount = 0
                             pSnapshot.forEach {
                                 if(it.getString("restaurantName") == placeName && it.getString("uid") != uid){

@@ -18,7 +18,7 @@
 
     <!-- GitHub consumer key and secret -->
     <string name="github_id" translatable="false">3e789217b2572a457a05</string>
-    <string name="github_secret" translatable="false">933749e3f89c49317d3dbb7b79be2fba43350394</string>
+    <string name="github_secret" translatable="false">e4a8d288ea52364c1bb87d71c96c62898bd186ed</string>
     <string name="github_app_url" translatable="false">go4lunch://github</string>
 
 
@@ -74,7 +74,8 @@
     <string name="changes_success">Changes have been saved successfully.</string>
     <string name="display_name">Name :</string>
     <string name="picture_url">Picture URL :</string>
-    <string name="open">open</string>
-    <string name="closed">closed</string>
+    <string name="openUntil">Open until %1$s</string>
+    <string name="closeUntil">Close until %1$s</string>
+    <string name="times_unavailable">Opening times unavailable</string>
     <string name="params_missing">One of the parameters is missing.</string>
 </resources>

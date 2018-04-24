@@ -19,17 +19,19 @@ import java.io.ByteArrayOutputStream
 
 
 /**
+ * Fragment containing a ListView that is displaying restaurants
  * Created by Mickael Hernandez on 24/01/2018.
  */
 class ListFragment : Fragment() {
 
+    /** Restaurant list */
     private var placesList = ArrayList<Restaurant>()
 
+    /** Layout's ListView */
     private lateinit var listView: ListView
 
+    /** Adapter between the restaurant list and the ListView */
     private lateinit var mAdapter : RestaurantListAdapter
-
-    private lateinit var mPlaceholder : TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +51,7 @@ class ListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         // Setting up adapter with arrayList
         listView = view.findViewById(R.id.places_list)
         listView.adapter = mAdapter
@@ -66,6 +69,7 @@ class ListFragment : Fragment() {
         }
     }
 
+    /** Clears the list's content */
     fun resetList(){
         if(placesList.size > 0){
             placesList.clear()
@@ -75,10 +79,12 @@ class ListFragment : Fragment() {
         }
     }
 
+    /** Returns the restaurant list */
     fun getList(): ArrayList<Restaurant>{
         return placesList
     }
 
+    /** Adds a restaurant to the list */
     fun addRestaurant(place: Restaurant){
         if(placesList.none { it.id == place.id }){
             placesList.add(place)
@@ -86,9 +92,5 @@ class ListFragment : Fragment() {
                 mAdapter.notifyDataSetChanged()
             }
         }
-    }
-
-    fun notifyDataSetChanged() {
-        mAdapter.notifyDataSetChanged()
     }
 }
