@@ -254,7 +254,7 @@ open class MainActivity : AppCompatActivity(),
                 mColRef.addSnapshotListener { colSnapshot, _ ->
                     if(colSnapshot != null && colSnapshot.documents.isNotEmpty()){
                         for(doc in colSnapshot.documents){
-                            mWorkmatesList.add(doc.toObject(Workmate::class.java))
+                            mWorkmatesList.add(doc.toObject(Workmate::class.java)!!)
                         }
                     }
                 }
@@ -268,6 +268,15 @@ open class MainActivity : AppCompatActivity(),
         mMapFragment.getMapAsync(this)
         fillDrawerHeader()
         updateFirestoreData()
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Hides the loading animation
+        if(loading_view.visibility == View.VISIBLE){
+            loading_view.visibility = View.GONE
+        }
     }
 
     /** Fills the drawer header with data from the user */
@@ -431,6 +440,7 @@ open class MainActivity : AppCompatActivity(),
                         if(it.isSuccessful && it.result.exists()){
                             val id = it.result.getString("restaurantId")
                             if(id != null && id != "") {
+                                if()
                                 displayRestaurant(id)
                             } else {
                                 Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()

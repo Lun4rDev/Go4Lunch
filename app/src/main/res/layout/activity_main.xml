@@ -75,8 +75,10 @@
         android:fitsSystemWindows="true"
         android:textAllCaps="true"
         app:headerLayout="@layout/nav_header_main"
+        app:menu="@menu/drawer_menu"
+        app:itemIconTint="#fff"
         app:itemTextColor="#fff"
-        app:menu="@menu/drawer_menu">
+        >
 
         <LinearLayout
             android:layout_width="match_parent"

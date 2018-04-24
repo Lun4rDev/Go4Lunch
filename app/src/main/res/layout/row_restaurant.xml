@@ -56,21 +56,27 @@
             android:id="@+id/place_distance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="end"
             android:layout_margin="3dp"
-            android:text="561296m"/>
+            android:text="561296m"
+            android:textColor="#9E9E9E"
+            />
 
         <TextView
             android:id="@+id/place_mates"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="end"
             android:layout_margin="3dp"
             android:drawableStart="@drawable/ic_perm_identity_black"
-            android:text="(3)"/>
+            android:text="(3)"
+            android:textStyle="bold"/>
 
         <TextView
             android:id="@+id/place_rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="end"
             android:layout_margin="3dp"
             android:orientation="horizontal"/>
     </LinearLayout>
