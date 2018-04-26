@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Location
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
@@ -156,8 +157,15 @@ open class MainActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Prevent unsigned user to enter the app
+        // Prevent unsigned user from entering the app
         if(FirebaseAuth.getInstance().currentUser == null || FirebaseAuth.getInstance().currentUser?.uid == null){
+            finish()
+        }
+
+        // Prevent user with no Internet connection from entering the app
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if(cm.activeNetworkInfo == null || !cm.activeNetworkInfo.isConnected){
+            Toast.makeText(applicationContext, "You need an Internet connection to use this application.", Toast.LENGTH_LONG).show()
             finish()
         }
 
@@ -435,7 +443,6 @@ open class MainActivity : AppCompatActivity(),
                         if(it.isSuccessful && it.result.exists()){
                             val id = it.result.getString("restaurantId")
                             if(id != null && id != "") {
-                                if()
                                 displayRestaurant(id)
                             } else {
                                 Toast.makeText(applicationContext, getString(R.string.no_restaurant_selected), Toast.LENGTH_SHORT).show()

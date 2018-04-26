@@ -1,6 +1,8 @@
 package com.hernandez.mickael.go4lunch.activities
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
@@ -54,6 +56,13 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Prevent user with no Internet connection from entering the app
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if(cm.activeNetworkInfo == null || !cm.activeNetworkInfo.isConnectedOrConnecting){
+            Toast.makeText(applicationContext, "You need an Internet connection to use this application.", Toast.LENGTH_LONG).show()
+            finish()
+        }
 
         // If user is already signed in
         mAuth = FirebaseAuth.getInstance()
