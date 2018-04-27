@@ -7,13 +7,13 @@ import com.google.gson.annotations.SerializedName;
 
 public class DetailsResult {
 
-    @SerializedName("address_components")
+    /*@SerializedName("address_components")
     @Expose
     private List<AddressComponent> addressComponents = null;
     @SerializedName("adr_address")
     @Expose
     private String adrAddress;
-    @SerializedName("formatted_address")
+    @SerializedName("formatted_address")*/
     @Expose
     private String formattedAddress;
     @SerializedName("formatted_phone_number")
@@ -49,9 +49,9 @@ public class DetailsResult {
     @SerializedName("reference")
     @Expose
     private String reference;
-    @SerializedName("reviews")
+    /*@SerializedName("reviews")
     @Expose
-    private List<Review> reviews = null;
+    private List<Review> reviews = null;*/
     @SerializedName("scope")
     @Expose
     private String scope;
@@ -61,9 +61,9 @@ public class DetailsResult {
     @SerializedName("url")
     @Expose
     private String url;
-    @SerializedName("utc_offset")
+    /*@SerializedName("utc_offset")
     @Expose
-    private Integer utcOffset;
+    private Integer utcOffset;*/
     @SerializedName("vicinity")
     @Expose
     private String vicinity;
@@ -71,21 +71,21 @@ public class DetailsResult {
     @Expose
     private String website;
 
-    public List<AddressComponent> getAddressComponents() {
+    /*public List<AddressComponent> getAddressComponents() {
         return addressComponents;
     }
 
     public void setAddressComponents(List<AddressComponent> addressComponents) {
         this.addressComponents = addressComponents;
-    }
+    }*/
 
-    public String getAdrAddress() {
+    /*public String getAdrAddress() {
         return adrAddress;
     }
 
     public void setAdrAddress(String adrAddress) {
         this.adrAddress = adrAddress;
-    }
+    }*/
 
     public String getFormattedAddress() {
         return formattedAddress;
@@ -183,13 +183,13 @@ public class DetailsResult {
         this.reference = reference;
     }
 
-    public List<Review> getReviews() {
+    /*public List<Review> getReviews() {
         return reviews;
     }
 
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
-    }
+    }*/
 
     public String getScope() {
         return scope;
@@ -215,13 +215,13 @@ public class DetailsResult {
         this.url = url;
     }
 
-    public Integer getUtcOffset() {
+    /*public Integer getUtcOffset() {
         return utcOffset;
     }
 
     public void setUtcOffset(Integer utcOffset) {
         this.utcOffset = utcOffset;
-    }
+    }*/
 
     public String getVicinity() {
         return vicinity;
