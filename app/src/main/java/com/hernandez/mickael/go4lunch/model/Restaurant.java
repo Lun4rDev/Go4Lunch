@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.hernandez.mickael.go4lunch.api.ApiSingleton;
 import com.hernandez.mickael.go4lunch.model.details.DetailsResult;
 
 import java.util.ArrayList;
@@ -57,8 +56,12 @@ public class Restaurant implements Parcelable {
     // Closing hour and minute in HHMM format
     public String closingTime;
 
-
+    // -2 if(== -1){ = 6
     public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance){
+        // In Calendar class, monday is 2 when it is 0 in Places API result
+        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 2;
+        if(day == -1){ day = 6; }
+
         id = result.getPlaceId();
         name = result.getName();
         type = result.getTypes().get(0);
@@ -67,8 +70,8 @@ public class Restaurant implements Parcelable {
         distance = pDistance;
         open = result.getOpeningHours() != null && result.getOpeningHours().getOpenNow() != null && result.getOpeningHours().getOpenNow();
         if(result.getOpeningHours() != null){
-            openingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
-            closingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            openingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
+            closingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
             addSeparatorToTimes();
         } else {
             openingTime = "";
@@ -81,6 +84,10 @@ public class Restaurant implements Parcelable {
     }
 
     public Restaurant(DetailsResult result, ArrayList<Workmate> pWorkmates, Float pDistance, Boolean pOpen, Bitmap pImg){
+        // In Calendar class, monday is 2 when it is 0 in Places API result
+        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 2;
+        if(day == -1){ day = 6; }
+
         id = result.getPlaceId();
         name = result.getName();
         type = result.getTypes().get(0);
@@ -90,8 +97,8 @@ public class Restaurant implements Parcelable {
         img = pImg;
         open = result.getOpeningHours() != null && result.getOpeningHours().getOpenNow() != null && result.getOpeningHours().getOpenNow();
         if(result.getOpeningHours() != null){
-            openingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
-            closingTime = result.getOpeningHours().getPeriods().get(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)).getOpen().getTime();
+            openingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
+            closingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
             addSeparatorToTimes();
         } else {
             openingTime = "";

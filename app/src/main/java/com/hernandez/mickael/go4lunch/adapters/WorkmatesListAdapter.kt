@@ -6,14 +6,9 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.ImageView
-import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.activities.MainActivity
-import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
-import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
 import kotlinx.android.synthetic.main.row_workmate.view.*
 

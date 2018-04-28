@@ -8,14 +8,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ListView
-import android.widget.TextView
 import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.activities.RestaurantActivity
 import com.hernandez.mickael.go4lunch.adapters.RestaurantListAdapter
+import com.hernandez.mickael.go4lunch.model.Restaurant
 import java.io.ByteArrayOutputStream
-
-
 
 
 /**

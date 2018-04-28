@@ -2,25 +2,25 @@ package com.hernandez.mickael.go4lunch.activities
 
 import android.Manifest
 import android.content.Context
-import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.model.Restaurant
-import kotlinx.android.synthetic.main.activity_restaurant.*
-import android.graphics.BitmapFactory
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hernandez.mickael.go4lunch.R
 import com.hernandez.mickael.go4lunch.adapters.JoiningListAdapter
+import com.hernandez.mickael.go4lunch.model.Restaurant
 import com.hernandez.mickael.go4lunch.model.Workmate
+import kotlinx.android.synthetic.main.activity_restaurant.*
 
 
 /**

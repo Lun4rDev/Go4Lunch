@@ -1,15 +1,11 @@
 package com.hernandez.mickael.go4lunch.api;
 
-import android.content.res.Resources;
-
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.hernandez.mickael.go4lunch.R;
 
 import java.io.IOException;
 
-import io.reactivex.internal.schedulers.RxThreadFactory;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
