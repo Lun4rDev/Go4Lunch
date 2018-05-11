@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.NotificationCompat
@@ -17,7 +18,8 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.google.firebase.auth.FirebaseAuth
@@ -117,16 +119,16 @@ class ParametersActivity : AppCompatActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
 
             override fun onTextChanged(txt: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Glide.with(applicationContext).load(txt.toString()).centerCrop().listener(object : RequestListener<String, GlideDrawable> {
-                    override fun onException(e: Exception?, model: String?, target: Target<GlideDrawable>?, isFirstResource: Boolean): Boolean {
+                Glide.with(applicationContext).load(txt.toString().toLowerCase()).listener(object : RequestListener<Drawable> {
+                    override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                        isimageValid = true
+                        return false
+                    }
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
                         isimageValid = false
                         return true
                     }
 
-                    override fun onResourceReady(resource: GlideDrawable?, model: String?, target: Target<GlideDrawable>?, isFromMemoryCache: Boolean, isFirstResource: Boolean): Boolean {
-                        isimageValid = true
-                        return false
-                    }
 
                 }).into(findViewById(R.id.image_profile))
             }
@@ -147,7 +149,7 @@ class ParametersActivity : AppCompatActivity() {
             // If the user wants to apply the changes
             R.id.action_apply -> {
                 val name = editName.text.toString()
-                val imgUrl = editImgUrl.text.toString()
+                val imgUrl = editImgUrl.text.toString().toLowerCase()
                 if(name != "" && imgUrl != ""){
                     if(isimageValid){
                         // updates username in database
@@ -155,7 +157,7 @@ class ParametersActivity : AppCompatActivity() {
                         mDocRef.update("photoUrl", imgUrl)
                         val profileUpdates = UserProfileChangeRequest.Builder()
                                 .setDisplayName(editName.text.toString())
-                                .setPhotoUri(Uri.parse(editImgUrl.text.toString()))
+                                .setPhotoUri(Uri.parse(imgUrl))
                                 .build()
                         mUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
                             if(it.isSuccessful){

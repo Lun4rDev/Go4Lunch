@@ -64,7 +64,9 @@ open class RestaurantListAdapter(context: Context, resource: Int, list: ArrayLis
         convertView.findViewById<TextView>(R.id.place_distance).text = dStr
 
         // Image
-        convertView.findViewById<ImageView>(R.id.place_image).setImageBitmap(item.img)
+        if(item.img != null){
+            convertView.findViewById<ImageView>(R.id.place_image).setImageBitmap(item.img)
+        }
 
         return convertView
     }

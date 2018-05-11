@@ -90,4 +90,9 @@ class ListFragment : Fragment() {
             }
         }
     }
+
+    fun updateRestaurantBitmap(bmp:Bitmap, rst: String){
+        placesList.find { it.id == rst }?.img = bmp
+        mAdapter.notifyDataSetChanged()
+    }
 }

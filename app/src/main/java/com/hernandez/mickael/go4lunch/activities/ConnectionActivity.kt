@@ -42,9 +42,6 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
     /** Google request code */
     val RC_GOOGLE = 123
 
-    /** Facebook request code */
-    val RC_FACEBOOK = 64206
-
     /** Firebase auth instance */
     private var mAuth = FirebaseAuth.getInstance()
 
@@ -207,10 +204,7 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 .build()
 
         okHttpClient.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: Call?, e: IOException?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            }
-
+            override fun onFailure(call: Call?, e: IOException?) {}
             override fun onResponse(call: Call?, response: Response?) {
                 val responseBody = response?.body()?.string()
                 val split = responseBody!!.split("[=&]".toRegex())
@@ -315,7 +309,11 @@ class ConnectionActivity : FragmentActivity(), EmailDialogFragment.NoticeDialogL
                 }
             }
             Twitter.getInstance().twitterAuthConfig.requestCode -> {
-                btn_twitter.onActivityResult(requestCode, resultCode, data)
+                try {
+                    btn_twitter.onActivityResult(requestCode, resultCode, data)
+                } catch(e: TwitterAuthException){
+                    this.recreate()
+                }
             }
         }
         if(FacebookSdk.isFacebookRequestCode(requestCode) && resultCode == RESULT_OK){

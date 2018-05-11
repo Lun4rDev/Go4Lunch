@@ -23,8 +23,8 @@ import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.animation.GlideAnimation
 import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -286,7 +286,7 @@ open class MainActivity : AppCompatActivity(),
         val navView = findViewById<NavigationView>(R.id.nav_view)
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_name).text = mUser?.displayName
         navView.getHeaderView(0).findViewById<TextView>(R.id.text_user_mail).text = mUser?.email
-        Glide.with(applicationContext).load(mUser?.photoUrl).centerCrop().into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
+        Glide.with(applicationContext).load(mUser?.photoUrl).into(nav_view.getHeaderView(0).findViewById(R.id.img_user))
     }
 
     /** Sends Firebase user data to the Firestore database */
@@ -500,11 +500,10 @@ open class MainActivity : AppCompatActivity(),
                                 runOnUiThread {
                                     // Download place image into a bitmap
                                     Glide.with(applicationContext)
-                                            .load(ApiSingleton.getUrlFromPhotoReference(res.photos[0].photoReference))
                                             .asBitmap()
-                                            .centerCrop()
+                                            .load(ApiSingleton.getUrlFromPhotoReference(res.photos[0].photoReference))
                                             .into(object: SimpleTarget<Bitmap>(){
-                                                override fun onResourceReady(resource: Bitmap, glideAnimation: GlideAnimation<in Bitmap>?) {
+                                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                                                     restaurant.img = resource
                                                     displayRestaurantWithObject(restaurant)
                                                 }
@@ -633,6 +632,8 @@ open class MainActivity : AppCompatActivity(),
                 val m = mMap.addMarker(marker)
                 m.tag = p.placeId
             }
+
+
                 // Details API call throttled with RxJava
                 ApiSingleton.getInstance().details(p.placeId)
                         .subscribeOn(Schedulers.io())
@@ -646,17 +647,19 @@ open class MainActivity : AppCompatActivity(),
                                 if(result != null){
                                     val restaurant = Restaurant(result, mates, distance[0])
                                     mRestaurantList.add(restaurant)
+                                    runOnUiThread {
+                                        mListFragment.addRestaurant(restaurant)
+                                    }
                                         // If there is an image in the result
                                         if(result.photos != null){
                                             runOnUiThread {
                                                 // Download place image into a bitmap
                                                 Glide.with(applicationContext)
-                                                        .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
                                                         .asBitmap()
-                                                        .centerCrop()
+                                                        .load(ApiSingleton.getUrlFromPhotoReference(result.photos[0].photoReference))
                                                         .into(object: SimpleTarget<Bitmap>(){
-                                                            override fun onResourceReady(resource: Bitmap, glideAnimation: GlideAnimation<in Bitmap>?) {
-                                                                restaurantReadyToAdd(resource, restaurant)
+                                                            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                                                updateRestaurantBitmap(resource, restaurant.id)
                                                             }
                                                         })
                                             }
@@ -665,7 +668,7 @@ open class MainActivity : AppCompatActivity(),
                                             Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, result.placeId).setResultCallback {
                                                 if (it.photoMetadata != null && it.photoMetadata.count > 0) {
                                                     it.photoMetadata[0].getPhoto(mGoogleApiClient).setResultCallback {
-                                                        restaurantReadyToAdd(it.bitmap, restaurant)
+                                                        updateRestaurantBitmap(it.bitmap, restaurant.id)
                                                     }
                                                 }
                                             }
@@ -680,11 +683,9 @@ open class MainActivity : AppCompatActivity(),
     }
 
     // UI function to set bitmap and add restaurant to the list, then hide the loading animation
-    private fun restaurantReadyToAdd(bmp: Bitmap, rst: Restaurant) {
-        // Set restaurant bitmap
-        rst.img = bmp
+    private fun updateRestaurantBitmap(bmp: Bitmap, rst: String) {
         // Add the restaurant to the list
-        mListFragment.addRestaurant(rst)
+        mListFragment.updateRestaurantBitmap(bmp, rst)
         // Hides the loading animation
         if(loading_view.visibility == View.VISIBLE){
             loading_view.visibility = View.GONE

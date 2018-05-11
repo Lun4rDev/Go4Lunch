@@ -69,7 +69,7 @@ public class Restaurant implements Parcelable {
         workmates = pWorkmates;
         distance = pDistance;
         open = result.getOpeningHours() != null && result.getOpeningHours().getOpenNow() != null && result.getOpeningHours().getOpenNow();
-        if(result.getOpeningHours() != null){
+        if(result.getOpeningHours() != null && result.getOpeningHours().getPeriods().size() >= 7){
             openingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
             closingTime = result.getOpeningHours().getPeriods().get(day).getOpen().getTime();
             addSeparatorToTimes();

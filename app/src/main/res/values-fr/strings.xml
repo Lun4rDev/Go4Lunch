@@ -35,9 +35,11 @@
     <string name="changes_success">Changements sauvegardés avec succès.</string>
     <string name="restaurant_map">Carte des restaurants</string>
     <string name="restaurant_list">Liste des restaurants</string>
-    <string name="display_name">Display name :</string>
+    <string name="display_name">Nom d\'utilisateur :</string>
     <string name="picture_url">URL de l\'image :</string>
     <string name="openUntil">Ouvert jusqu\'à %1$s</string>
     <string name="closeUntil">Fermé jusqu\'à %1$s</string>
     <string name="times_unavailable">Horaires indisponibles</string>
+    <string name="params_missing">Un des paramètres est manquant.</string>
+    <string name="github_sign_in">Se connecter avec GitHub</string>
 </resources>

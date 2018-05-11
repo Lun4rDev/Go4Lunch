@@ -1,52 +1,28 @@
 package com.hernandez.mickael.go4lunch.activities
 
 import android.support.design.widget.BottomNavigationView
-import android.support.design.widget.NavigationView
-import org.junit.Assert.*
 import android.support.test.InstrumentationRegistry
 import android.support.test.InstrumentationRegistry.getInstrumentation
 import android.support.test.espresso.Espresso
-import android.support.test.espresso.Espresso.onData
 import android.support.test.espresso.Espresso.onView
-import android.support.test.espresso.matcher.ViewMatchers
-import android.support.test.rule.ActivityTestRule
-import android.support.test.runner.AndroidJUnit4
-import com.hernandez.mickael.go4lunch.R
-import com.hernandez.mickael.go4lunch.R.id.navigation_list
-import com.hernandez.mickael.go4lunch.fragments.ListFragment
+import android.support.test.espresso.action.ViewActions.*
 import android.support.test.espresso.contrib.DrawerActions
 import android.support.test.espresso.contrib.NavigationViewActions
-import android.support.test.espresso.matcher.ViewMatchers.*
-import android.support.v7.view.menu.ActionMenuItem
-import android.support.v7.view.menu.ActionMenuItemView
-import android.view.MenuItem
+import android.support.test.espresso.matcher.ViewMatchers
+import android.support.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import android.support.test.espresso.matcher.ViewMatchers.withId
+import android.support.test.rule.ActivityTestRule
+import android.support.test.runner.AndroidJUnit4
+import android.view.KeyEvent
 import android.widget.SearchView
-import org.hamcrest.CoreMatchers
+import com.hernandez.mickael.go4lunch.R
+import kotlinx.android.synthetic.main.activity_main.*
 import org.junit.After
-
-import org.junit.Test
-import org.junit.runner.RunWith
-
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
-import android.support.test.espresso.UiController
-import android.support.test.espresso.matcher.ViewMatchers.isDisplayed
-import android.support.test.espresso.ViewAction
-import android.support.test.espresso.action.ViewActions.*
-import android.support.test.espresso.assertion.ViewAssertions.matches
-import android.support.test.espresso.contrib.RecyclerViewActions
-import android.support.test.espresso.contrib.RecyclerViewActions.actionOnItem
-import android.support.v7.widget.RecyclerView
-import android.view.KeyEvent
-import android.view.View
-import android.widget.AutoCompleteTextView
-import android.widget.EditText
-import com.hernandez.mickael.go4lunch.R.id.drawer_layout
-import com.hernandez.mickael.go4lunch.fragments.WorkmatesFragment
-import kotlinx.android.synthetic.main.activity_main.*
-import org.hamcrest.Matcher
-import org.hamcrest.Matchers.*
+import org.junit.Test
+import org.junit.runner.RunWith
 
 
 /**
@@ -100,7 +76,7 @@ class MainActivityTest {
         //mActivity.viewPager.currentItem = 2
         Espresso.onView(ViewMatchers.withId(R.id.drawer_layout)).perform(DrawerActions.open()) // opens the navigation drawer
         Espresso.onView(ViewMatchers.withId(R.id.nav_view)).perform(NavigationViewActions.navigateTo(R.id.item_lunch)) // clicks on the top stories item in drawer
-        Thread.sleep(5*mDelay)
+        Thread.sleep(2*mDelay)
         val nextActivity = getInstrumentation().waitForMonitorWithTimeout(activityMonitor, mDelay)
         assertNotNull(nextActivity) // assert that the selected tab is the second (top stories tab)
         nextActivity.finish()

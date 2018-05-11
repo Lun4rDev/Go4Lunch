@@ -78,4 +78,5 @@
     <string name="closeUntil">Close until %1$s</string>
     <string name="times_unavailable">Opening times unavailable</string>
     <string name="params_missing">One of the parameters is missing.</string>
+    <string name="github_sign_in">Sign in with GitHub</string>
 </resources>

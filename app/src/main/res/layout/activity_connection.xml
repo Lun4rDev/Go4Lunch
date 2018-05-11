@@ -68,7 +68,7 @@
             android:height="@dimen/button_login_height"
             android:background="#000"
             android:drawableStart="@drawable/ic_github_white"
-            android:text=""
+            android:text="@string/github_sign_in"
             android:textColor="#fff"/>
 
 </LinearLayout>

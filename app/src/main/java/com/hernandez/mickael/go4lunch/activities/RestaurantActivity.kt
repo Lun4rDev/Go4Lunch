@@ -143,10 +143,6 @@ class RestaurantActivity : AppCompatActivity() {
                     }
                 }
             }
-            /*
-            mSharedPrefs.edit().putBoolean(getString(R.string.RESTAURANT_CHANGE), true).apply()
-            mSharedPrefs.edit().putStringSet(getString(R.string.RESTAURANT_VALUES), setOf(mRestaurant.id.toString(), mRestaurant.name.toString()) as MutableSet<String>?).apply()
-            */
             finish()
         }
     }

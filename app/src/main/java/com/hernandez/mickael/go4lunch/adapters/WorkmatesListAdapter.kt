@@ -24,7 +24,7 @@ open class WorkmatesListAdapter(context: Context, resource: Int, list: ArrayList
     private var mList = list
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent!!.context)
+        val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.row_workmate, parent, false)
         return ViewHolder(view)
     }

@@ -6,9 +6,9 @@ import android.support.test.espresso.matcher.ViewMatchers.withId
 import android.support.test.rule.ActivityTestRule
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hernandez.mickael.go4lunch.R
-import kotlinx.android.synthetic.main.activity_parameters.view.*
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,16 +52,22 @@ class ParametersActivityTest {
         // Type image url
         onView(withId(R.id.edit_imgurl)).perform(clearText(), typeText(testImgUrl))
 
+        // Wait a second
+        Thread.sleep(1000)
+
         // Click on apply
         onView(withId(R.id.action_apply)).perform(click())
+
+        // Wait a second
+        Thread.sleep(1000)
 
         // Get firestore data to compare
         FirebaseFirestore.getInstance().collection("users").document(mActivity.mUser!!.uid).get().addOnCompleteListener {
 
             // Assert the data exists and is equal to the one entered
             assertTrue(it.result.exists())
-            assertEquals(it.result.get("displayName"), testUsername)
-            assertEquals(it.result.get("photoUrl"), testImgUrl)
+            assertEquals(testUsername, it.result.get("displayName"))
+            assertEquals(testImgUrl, it.result.get("photoUrl"))
         }
     }
 }
